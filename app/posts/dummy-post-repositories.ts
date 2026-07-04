@@ -25,6 +25,10 @@ export type PostListItemDto = {
   commentCount: number;
 };
 
+export type PostDetailDto = Omit<PostListItemDto, "content"> & {
+  content: string;
+};
+
 export type PostCategoryCollectionDto = {
   count: number;
   items: PostCategoryDto[];
@@ -60,6 +64,10 @@ type PostApiItem = PostListItemDto & {
   };
 };
 
+type PostDetailApiItem = PostDetailDto & {
+  _links: Record<string, string> | null;
+};
+
 type CategorySeed = {
   id: string;
   name: string;
@@ -70,9 +78,11 @@ type PostSeed = {
   title: string;
   categoryId: string;
   createdAt: string;
+  updatedAt: string;
   viewCount: number;
   likeCount: number;
   commentCount: number;
+  content: string;
 };
 
 const PAGE_SIZE = 20;
@@ -139,6 +149,117 @@ function createPostTitle(categoryId: string, categorySequence: number) {
   return `${template} ${categorySequence}`;
 }
 
+function getCategoryById(categoryId: string) {
+  const category = categorySeeds.find((item) => item.id === categoryId);
+
+  if (!category) {
+    throw new Error(`Unknown category: ${categoryId}`);
+  }
+
+  return category;
+}
+
+function createPostContent(params: {
+  title: string;
+  categoryName: string;
+  categorySequence: number;
+}) {
+  const { title, categoryName, categorySequence } = params;
+
+  return `# ${title}
+
+## Summary
+
+이 글은 **${categoryName}** 카테고리의 ${categorySequence}번째 샘플 게시물입니다.
+실제 상세 보기 페이지에서 필요한 마크다운, 코드 블럭, 수식, 이미지, 유튜브 렌더링을 함께 검증하기 위한 더미 본문입니다.
+
+## Checklist
+
+- 핵심 맥락을 빠르게 읽을 수 있어야 합니다.
+- 코드 블럭은 언어별 syntax highlighting 이 되어야 합니다.
+- 수식과 이미지, 외부 임베드도 같은 본문 안에서 자연스럽게 보여야 합니다.
+
+## Kotlin Example
+
+\`\`\`kotlin
+data class PublishPostCommand(
+    val title: String,
+    val categoryId: String,
+    val content: String,
+)
+
+fun validate(command: PublishPostCommand) {
+    require(command.title.isNotBlank()) { "title must not be blank" }
+    require(command.content.length >= 20) { "content is too short" }
+}
+\`\`\`
+
+## TypeScript Example
+
+\`\`\`typescript
+type PostSummary = {
+  id: string;
+  title: string;
+  createdAt: string;
+};
+
+export function sortPosts(posts: PostSummary[]) {
+  return [...posts].sort((left, right) =>
+    right.createdAt.localeCompare(left.createdAt),
+  );
+}
+\`\`\`
+
+## Bash Example
+
+\`\`\`bash
+curl -X GET "https://api.example.com/posts/${categorySequence}" \\
+  -H "Accept: application/json"
+\`\`\`
+
+## JSON Example
+
+\`\`\`json
+{
+  "title": "${title}",
+  "category": "${categoryName}",
+  "sequence": ${categorySequence}
+}
+\`\`\`
+
+## Formula
+
+인프라 여유율을 단순화하면 다음과 같이 볼 수 있습니다.
+
+$$
+capacity\\ margin = \\frac{max\\ throughput - current\\ throughput}{max\\ throughput}
+$$
+
+인라인 수식도 표시되어야 합니다. 예를 들어 $p95 < 250ms$ 를 목표로 둘 수 있습니다.
+
+## Image
+
+![profile image](/dohoon-kim.png){width=320}
+
+<p align="center">이 문장은 HTML align 속성을 이용한 중앙 정렬 예시입니다.</p>
+
+## YouTube
+
+<iframe
+  src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+  title="YouTube video player"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  allowfullscreen
+></iframe>
+
+## Closing Notes
+
+> 렌더러가 HTML 과 Markdown 을 모두 다루더라도, 허용 범위는 명확하게 제한하는 편이 안전합니다.
+
+다음 단계에서는 실제 API 연동과 작성자 권한 기반 수정/삭제 노출 조건을 연결하면 됩니다.
+`;
+}
+
 function createPostSeeds(): PostSeed[] {
   const remainingCounts = new Map(
     categoryPostTargets.map((target) => [target.categoryId, target.count]),
@@ -162,37 +283,38 @@ function createPostSeeds(): PostSeed[] {
   }
 
   return categoryQueue.map((categoryId, index) => {
+    const category = getCategoryById(categoryId);
     const categorySequence = (categorySequences.get(categoryId) ?? 0) + 1;
     const idSuffix = String(index + 1).padStart(12, "0");
     const createdAt = new Date(
       Date.UTC(2026, 5, 30, 9, 0, 0) - index * 24 * 60 * 60 * 1000,
     ).toISOString();
+    const updatedAt = new Date(
+      Date.UTC(2026, 5, 30, 12, 30, 0) - index * 24 * 60 * 60 * 1000,
+    ).toISOString();
+    const title = createPostTitle(categoryId, categorySequence);
 
     categorySequences.set(categoryId, categorySequence);
 
     return {
       id: `cc8efcb3-14b5-4900-b7a7-${idSuffix}`,
-      title: createPostTitle(categoryId, categorySequence),
+      title,
       categoryId,
       createdAt,
+      updatedAt,
       viewCount: 120 + index * 3,
       likeCount: 5 + (index % 17),
       commentCount: index % 9,
+      content: createPostContent({
+        title,
+        categoryName: category.name,
+        categorySequence,
+      }),
     };
   });
 }
 
 const postSeeds = createPostSeeds();
-
-function getCategoryById(categoryId: string) {
-  const category = categorySeeds.find((item) => item.id === categoryId);
-
-  if (!category) {
-    throw new Error(`Unknown category: ${categoryId}`);
-  }
-
-  return category;
-}
 
 function getCategoryPostCount(categoryId: string) {
   return postSeeds.filter((post) => post.categoryId === categoryId).length;
@@ -268,7 +390,7 @@ export function createPostListApiResponse(
         postCount: 0,
       },
       createdAt: post.createdAt,
-      updatedAt: post.createdAt,
+      updatedAt: post.updatedAt,
       viewCount: post.viewCount,
       likeCount: post.likeCount,
       commentCount: post.commentCount,
@@ -284,6 +406,42 @@ export function createPostListApiResponse(
       count: filteredPosts.length,
       items,
       _links: null,
+    },
+    message: "success",
+    code: "OK",
+  };
+}
+
+export function createPostDetailApiResponse(
+  postId: string,
+): ApiResponse<PostDetailApiItem> | null {
+  const post = postSeeds.find((item) => item.id === postId);
+
+  if (!post) {
+    return null;
+  }
+
+  const category = getCategoryById(post.categoryId);
+
+  return {
+    status: 200,
+    payload: {
+      id: post.id,
+      status: "PUBLISHED",
+      title: post.title,
+      content: post.content,
+      writer,
+      category: {
+        id: category.id,
+        name: category.name,
+        postCount: 0,
+      },
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      viewCount: post.viewCount,
+      likeCount: post.likeCount,
+      commentCount: post.commentCount,
+      _links: {},
     },
     message: "success",
     code: "OK",
@@ -339,6 +497,28 @@ export class DummyPostRepository {
               response.payload.items[response.payload.items.length - 1]._links.next,
             )
           : null,
+    };
+  }
+
+  async getPostById(postId: string): Promise<PostDetailDto | null> {
+    const response = createPostDetailApiResponse(postId);
+
+    if (!response) {
+      return null;
+    }
+
+    return {
+      id: response.payload.id,
+      status: response.payload.status,
+      title: response.payload.title,
+      content: response.payload.content,
+      writer: response.payload.writer,
+      category: response.payload.category,
+      createdAt: response.payload.createdAt,
+      updatedAt: response.payload.updatedAt,
+      viewCount: response.payload.viewCount,
+      likeCount: response.payload.likeCount,
+      commentCount: response.payload.commentCount,
     };
   }
 }

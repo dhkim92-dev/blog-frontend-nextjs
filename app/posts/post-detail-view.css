@@ -1,0 +1,332 @@
+.post-detail-page-root {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  width: 100%;
+  max-width: 100vw;
+  padding: 72px 24px 96px;
+  background: #000000;
+  overflow-x: clip;
+}
+
+.post-detail-page-root,
+.post-detail-page-root * {
+  box-sizing: border-box;
+}
+
+.post-detail-view-root {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: min(960px, 100%);
+  min-width: 0;
+}
+
+.post-detail-title,
+.post-detail-markdown {
+  width: 100%;
+  min-width: 0;
+  border-radius: 24px;
+  background: #0b0b0b;
+}
+
+.post-detail-title {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 28px 32px;
+}
+
+.post-detail-title-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.post-detail-category {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.post-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  color: #a3a3a3;
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.post-detail-actions[data-visible="false"] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.post-detail-title-heading {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.post-detail-title-meta {
+  color: #a3a3a3;
+  font-size: 15px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.post-detail-markdown {
+  padding: 40px 32px;
+  color: #ffffff;
+}
+
+.post-detail-markdown .markdown-body {
+  color: #ffffff;
+  font-size: 17px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+
+.post-detail-markdown .markdown-body > *:first-child {
+  margin-top: 0;
+}
+
+.post-detail-markdown .markdown-body > *:last-child {
+  margin-bottom: 0;
+}
+
+.post-detail-markdown .markdown-body h1,
+.post-detail-markdown .markdown-body h2,
+.post-detail-markdown .markdown-body h3,
+.post-detail-markdown .markdown-body h4,
+.post-detail-markdown .markdown-body h5,
+.post-detail-markdown .markdown-body h6 {
+  margin: 1.8em 0 0.7em;
+  color: #ffffff;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.post-detail-markdown .markdown-body h1 {
+  font-size: 2rem;
+}
+
+.post-detail-markdown .markdown-body h2 {
+  font-size: 1.65rem;
+}
+
+.post-detail-markdown .markdown-body h3 {
+  font-size: 1.35rem;
+}
+
+.post-detail-markdown .markdown-body p,
+.post-detail-markdown .markdown-body ul,
+.post-detail-markdown .markdown-body ol,
+.post-detail-markdown .markdown-body blockquote,
+.post-detail-markdown .markdown-body pre,
+.post-detail-markdown .markdown-body table,
+.post-detail-markdown .markdown-body hr {
+  margin: 1.1em 0;
+}
+
+.post-detail-markdown .markdown-body ul,
+.post-detail-markdown .markdown-body ol {
+  padding-left: 1.5em;
+  list-style-position: outside;
+}
+
+.post-detail-markdown .markdown-body ul {
+  list-style-type: disc;
+}
+
+.post-detail-markdown .markdown-body ol {
+  list-style-type: decimal;
+}
+
+.post-detail-markdown .markdown-body ul ul {
+  list-style-type: circle;
+}
+
+.post-detail-markdown .markdown-body ul ul ul {
+  list-style-type: square;
+}
+
+.post-detail-markdown .markdown-body ol ol {
+  list-style-type: lower-alpha;
+}
+
+.post-detail-markdown .markdown-body ol ol ol {
+  list-style-type: lower-roman;
+}
+
+.post-detail-markdown .markdown-body ul ol {
+  list-style-type: decimal;
+}
+
+.post-detail-markdown .markdown-body ol ul {
+  list-style-type: disc;
+}
+
+.post-detail-markdown .markdown-body li + li {
+  margin-top: 0.4em;
+}
+
+.post-detail-markdown .markdown-body a {
+  color: #93c5fd;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.post-detail-markdown .markdown-body strong {
+  color: #ffffff;
+}
+
+.post-detail-markdown .markdown-body blockquote {
+  border-left: 4px solid #3f3f46;
+  padding-left: 16px;
+  color: #d4d4d8;
+}
+
+.post-detail-markdown .markdown-body code {
+  border-radius: 8px;
+  background: #18181b;
+  padding: 0.14em 0.38em;
+  color: #f4f4f5;
+  font-size: 0.92em;
+}
+
+.post-detail-markdown .markdown-body pre {
+  overflow-x: auto;
+  border-radius: 18px;
+  background: #111827;
+}
+
+.post-detail-markdown .markdown-body pre code {
+  display: block;
+  background: transparent;
+  padding: 18px 20px;
+}
+
+.post-detail-markdown .markdown-body img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  margin: 1.5em auto;
+  border-radius: 20px;
+}
+
+.post-detail-markdown .markdown-body [align="center"] {
+  text-align: center;
+}
+
+.post-detail-markdown .markdown-body [align="right"] {
+  text-align: right;
+}
+
+.post-detail-markdown .markdown-body [align="left"] {
+  text-align: left;
+}
+
+.post-detail-markdown .markdown-body hr {
+  border: 0;
+  border-top: 1px solid #3f3f46;
+}
+
+.post-detail-markdown .markdown-body table {
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.post-detail-markdown .markdown-body th,
+.post-detail-markdown .markdown-body td {
+  border: 1px solid #3f3f46;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.post-detail-markdown .markdown-body .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+}
+
+.post-detail-youtube {
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  margin: 1.5em 0;
+  border-radius: 20px;
+  background: #000000;
+  aspect-ratio: 16 / 9;
+}
+
+.post-detail-youtube iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@media (max-width: 768px) {
+  .post-detail-page-root {
+    padding: 48px 16px 72px;
+  }
+
+  .post-detail-view-root {
+    gap: 20px;
+  }
+
+  .post-detail-title,
+  .post-detail-markdown {
+    border-radius: 20px;
+  }
+
+  .post-detail-title,
+  .post-detail-markdown {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .post-detail-title {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+
+  .post-detail-markdown {
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+
+  .post-detail-title-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .post-detail-actions,
+  .post-detail-title-meta {
+    width: 100%;
+    text-align: left;
+  }
+
+  .post-detail-markdown .markdown-body {
+    font-size: 16px;
+    line-height: 1.8;
+  }
+
+  .post-detail-markdown .markdown-body h1 {
+    font-size: 1.7rem;
+  }
+
+  .post-detail-markdown .markdown-body h2 {
+    font-size: 1.45rem;
+  }
+}

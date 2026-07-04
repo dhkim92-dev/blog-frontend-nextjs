@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   browserDummyPostRepository,
@@ -25,7 +26,7 @@ export default function PostsView({
     initialPostsPage.nextCursor,
   );
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const lastPostRef = useRef<HTMLElement | null>(null);
+  const lastPostRef = useRef<HTMLAnchorElement | null>(null);
   const isLoadingMoreRef = useRef(false);
 
   const loadMorePosts = useCallback(
@@ -81,8 +82,9 @@ export default function PostsView({
     <>
       <div className="post-list-items">
         {posts.map((post, index) => (
-          <article
+          <Link
             key={post.id}
+            href={`/posts/${post.id}`}
             ref={index === posts.length - 1 ? lastPostRef : null}
             className="post-list-item"
           >
@@ -93,7 +95,7 @@ export default function PostsView({
                 by {post.writer.nickname} | {formatDate(post.createdAt)}
               </span>
             </div>
-          </article>
+          </Link>
         ))}
         {posts.length === 0 ? (
           <div className="post-list-empty">No posts found.</div>
