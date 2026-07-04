@@ -24,7 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full bg-black font-sans text-white">
+      <body
+        suppressHydrationWarning
+        className="min-h-full bg-black font-sans text-white"
+      >
         <div className="flex min-h-screen flex-col">
           <header className="border-b border-white/10">
             <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-center gap-4 px-6 py-6 md:flex-row md:justify-between">

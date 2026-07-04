@@ -3,18 +3,32 @@ import {
   dummyPostCategoryRepository,
   dummyPostRepository,
 } from "./dummy-post-repositories";
+import PostEditorView from "./post-editor-view";
 import PostsView from "./posts-view";
 import "./posts-view.css";
+import "./post-detail-view.css";
+import "./post-editor-view.css";
 
 type PostsPageProps = {
   searchParams?: Promise<{
     category?: string;
+    mode?: string;
   }>;
 };
 
 export default async function PostsPage({ searchParams }: PostsPageProps) {
   const resolvedSearchParams = await searchParams;
+  const mode = resolvedSearchParams?.mode ?? null;
   const selectedCategoryId = resolvedSearchParams?.category ?? null;
+
+  if (mode === "edit") {
+    const categories = await dummyPostCategoryRepository.getCategories();
+
+    return (
+      <PostEditorView categories={categories.items} initialPost={null} mode="create" />
+    );
+  }
+
   const [categories, postsPage] = await Promise.all([
     dummyPostCategoryRepository.getCategories(),
     dummyPostRepository.getPosts({ categoryId: selectedCategoryId }),

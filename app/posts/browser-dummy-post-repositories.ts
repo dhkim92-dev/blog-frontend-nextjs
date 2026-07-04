@@ -1,0 +1,159 @@
+export type PostCategoryDto = {
+  id: string;
+  name: string;
+  postCount: number;
+};
+
+export type PostListItemDto = {
+  id: string;
+  status: string;
+  title: string;
+  content: null;
+  writer: {
+    id: string;
+    nickname: string;
+  };
+  category: {
+    id: string;
+    name: string;
+    postCount: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+};
+
+export type PostDetailDto = Omit<PostListItemDto, "content"> & {
+  content: string;
+};
+
+export type PostCursorPageDto = {
+  count: number;
+  items: PostListItemDto[];
+  nextCursor: string | null;
+};
+
+export type PostQueryParams = {
+  categoryId: string | null;
+  cursor?: string | null;
+};
+
+export type SavePostRequestDto = {
+  categoryId: string;
+  title: string;
+  content: string;
+  status: string;
+};
+
+type ApiResponse<TPayload> = {
+  status: number;
+  payload: TPayload;
+  message: string;
+  code: string;
+};
+
+type CollectionPayload<TItem> = {
+  count: number;
+  items: TItem[];
+  _links: Record<string, string> | null;
+};
+
+type PostApiItem = PostListItemDto & {
+  _links: {
+    next: string | null;
+  };
+};
+
+function extractCursor(nextUrl: string | null) {
+  if (!nextUrl) {
+    return null;
+  }
+
+  const searchParams = new URL(nextUrl, "https://dummy.local").searchParams;
+
+  return searchParams.get("cursor");
+}
+
+function mapPostListApiResponseToDto(
+  response: ApiResponse<CollectionPayload<PostApiItem>>,
+): PostCursorPageDto {
+  return {
+    count: response.payload.count,
+    items: response.payload.items.map((item) => ({
+      id: item.id,
+      status: item.status,
+      title: item.title,
+      content: item.content,
+      writer: item.writer,
+      category: item.category,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      viewCount: item.viewCount,
+      likeCount: item.likeCount,
+      commentCount: item.commentCount,
+    })),
+    nextCursor:
+      response.payload.items.length > 0
+        ? extractCursor(
+            response.payload.items[response.payload.items.length - 1]._links.next,
+          )
+        : null,
+  };
+}
+
+export class BrowserDummyPostRepository {
+  async getPosts(params: PostQueryParams): Promise<PostCursorPageDto> {
+    const searchParams = new URLSearchParams();
+
+    if (params.categoryId) {
+      searchParams.set("categoryId", params.categoryId);
+    }
+
+    if (params.cursor) {
+      searchParams.set("cursor", params.cursor);
+    }
+
+    const query = searchParams.toString();
+    const response = await fetch(`/api/posts${query ? `?${query}` : ""}`, {
+      method: "GET",
+      cache: "no-store",
+    });
+    const responseBody =
+      (await response.json()) as ApiResponse<CollectionPayload<PostApiItem>>;
+
+    return mapPostListApiResponseToDto(responseBody);
+  }
+
+  async createPost(requestBody: SavePostRequestDto): Promise<number> {
+    const response = await fetch("/api/posts", {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    return response.status;
+  }
+
+  async updatePost(
+    postId: string,
+    requestBody: SavePostRequestDto,
+  ): Promise<number> {
+    const response = await fetch(`/api/posts/${postId}`, {
+      method: "PUT",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    return response.status;
+  }
+}
+
+export const browserDummyPostRepository = new BrowserDummyPostRepository();

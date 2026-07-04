@@ -6,7 +6,7 @@ import {
   browserDummyPostRepository,
   type PostCursorPageDto,
   type PostListItemDto,
-} from "./dummy-post-repositories";
+} from "./browser-dummy-post-repositories";
 
 type PostsViewProps = {
   initialPostsPage: PostCursorPageDto;

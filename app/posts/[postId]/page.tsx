@@ -1,14 +1,20 @@
 import { notFound } from "next/navigation";
 import {
+  dummyPostCategoryRepository,
   dummyPostRepository,
   type PostDetailDto,
 } from "@/app/posts/dummy-post-repositories";
 import PostDetailMarkdown from "@/app/posts/post-detail-markdown";
+import PostEditorView from "@/app/posts/post-editor-view";
 import "../post-detail-view.css";
+import "../post-editor-view.css";
 
 type PostDetailPageProps = {
   params: Promise<{
     postId: string;
+  }>;
+  searchParams?: Promise<{
+    mode?: string;
   }>;
 };
 
@@ -56,8 +62,31 @@ function PostDetailTitle({ post }: { post: PostDetailDto }) {
 
 export default async function PostDetailPage({
   params,
+  searchParams,
 }: PostDetailPageProps) {
   const { postId } = await params;
+  const resolvedSearchParams = await searchParams;
+  const mode = resolvedSearchParams?.mode ?? null;
+
+  if (mode === "edit") {
+    const [categories, post] = await Promise.all([
+      dummyPostCategoryRepository.getCategories(),
+      dummyPostRepository.getPostById(postId),
+    ]);
+
+    if (!post) {
+      notFound();
+    }
+
+    return (
+      <PostEditorView
+        categories={categories.items}
+        initialPost={post}
+        mode="edit"
+      />
+    );
+  }
+
   const post = await dummyPostRepository.getPostById(postId);
 
   if (!post) {

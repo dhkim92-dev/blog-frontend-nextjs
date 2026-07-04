@@ -45,6 +45,13 @@ export type PostQueryParams = {
   cursor?: string | null;
 };
 
+export type SavePostRequestDto = {
+  categoryId: string;
+  title: string;
+  content: string;
+  status: string;
+};
+
 type ApiResponse<TPayload> = {
   status: number;
   payload: TPayload;
@@ -314,28 +321,67 @@ function createPostSeeds(): PostSeed[] {
   });
 }
 
-const postSeeds = createPostSeeds();
+const initialPostSeeds = createPostSeeds();
 
-function getCategoryPostCount(categoryId: string) {
+async function readPostSeeds() {
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const storeDirectory = path.join("/private/tmp", "blog-nextjs-dummy-post-store");
+  const storeFilePath = path.join(storeDirectory, "posts.json");
+
+  try {
+    const storedValue = await fs.readFile(storeFilePath, "utf8");
+    const parsedValue = JSON.parse(storedValue) as PostSeed[];
+
+    return Array.isArray(parsedValue) ? parsedValue : [...initialPostSeeds];
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+
+    await fs.mkdir(storeDirectory, { recursive: true });
+    await fs.writeFile(
+      storeFilePath,
+      JSON.stringify(initialPostSeeds, null, 2),
+      "utf8",
+    );
+
+    return [...initialPostSeeds];
+  }
+}
+
+async function writePostSeeds(postSeeds: PostSeed[]) {
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const storeDirectory = path.join("/private/tmp", "blog-nextjs-dummy-post-store");
+  const storeFilePath = path.join(storeDirectory, "posts.json");
+
+  await fs.mkdir(storeDirectory, { recursive: true });
+  await fs.writeFile(storeFilePath, JSON.stringify(postSeeds, null, 2), "utf8");
+}
+
+async function getCategoryPostCount(categoryId: string) {
+  const postSeeds = await readPostSeeds();
+
   return postSeeds.filter((post) => post.categoryId === categoryId).length;
 }
 
-export function createCategoryListApiResponse(): ApiResponse<
-  CollectionPayload<PostCategoryDto>
+export async function createCategoryListApiResponse(): Promise<
+  ApiResponse<CollectionPayload<PostCategoryDto>>
 > {
-  const items = categorySeeds
-    .map((category) => ({
+  const items = await Promise.all(
+    categorySeeds.map(async (category) => ({
       id: category.id,
       name: category.name,
-      postCount: getCategoryPostCount(category.id),
-    }))
-    .sort((left, right) => right.postCount - left.postCount);
+      postCount: await getCategoryPostCount(category.id),
+    })),
+  );
 
   return {
     status: 200,
     payload: {
       count: items.length,
-      items,
+      items: items.sort((left, right) => right.postCount - left.postCount),
       _links: {},
     },
     message: "success",
@@ -359,10 +405,11 @@ function buildNextUrl(categoryId: string | null, cursor: string | null) {
   return `/api/posts?${params.toString()}`;
 }
 
-export function createPostListApiResponse(
+export async function createPostListApiResponse(
   categoryId: string | null,
   cursor: string | null,
-): ApiResponse<CollectionPayload<PostApiItem>> {
+): Promise<ApiResponse<CollectionPayload<PostApiItem>>> {
+  const postSeeds = await readPostSeeds();
   const filteredPosts = postSeeds
     .filter((post) => !categoryId || post.categoryId === categoryId)
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
@@ -412,9 +459,10 @@ export function createPostListApiResponse(
   };
 }
 
-export function createPostDetailApiResponse(
+export async function createPostDetailApiResponse(
   postId: string,
-): ApiResponse<PostDetailApiItem> | null {
+): Promise<ApiResponse<PostDetailApiItem> | null> {
+  const postSeeds = await readPostSeeds();
   const post = postSeeds.find((item) => item.id === postId);
 
   if (!post) {
@@ -448,6 +496,64 @@ export function createPostDetailApiResponse(
   };
 }
 
+export async function createPostApiResponse(
+  requestBody: SavePostRequestDto,
+): Promise<ApiResponse<null>> {
+  getCategoryById(requestBody.categoryId);
+  const postSeeds = await readPostSeeds();
+
+  const now = new Date().toISOString();
+
+  postSeeds.unshift({
+    id: crypto.randomUUID(),
+    title: requestBody.title,
+    categoryId: requestBody.categoryId,
+    createdAt: now,
+    updatedAt: now,
+    viewCount: 0,
+    likeCount: 0,
+    commentCount: 0,
+    content: requestBody.content,
+  });
+
+  await writePostSeeds(postSeeds);
+
+  return {
+    status: 201,
+    payload: null,
+    message: "post created",
+    code: "POST_CREATED",
+  };
+}
+
+export async function updatePostApiResponse(
+  postId: string,
+  requestBody: SavePostRequestDto,
+): Promise<ApiResponse<null> | null> {
+  const postSeeds = await readPostSeeds();
+  const post = postSeeds.find((item) => item.id === postId);
+
+  if (!post) {
+    return null;
+  }
+
+  getCategoryById(requestBody.categoryId);
+
+  post.title = requestBody.title;
+  post.categoryId = requestBody.categoryId;
+  post.content = requestBody.content;
+  post.updatedAt = new Date().toISOString();
+
+  await writePostSeeds(postSeeds);
+
+  return {
+    status: 200,
+    payload: null,
+    message: "post updated",
+    code: "POST_UPDATED",
+  };
+}
+
 function extractCursor(nextUrl: string | null) {
   if (!nextUrl) {
     return null;
@@ -460,7 +566,7 @@ function extractCursor(nextUrl: string | null) {
 
 export class DummyPostCategoryRepository {
   async getCategories(): Promise<PostCategoryCollectionDto> {
-    const response = createCategoryListApiResponse();
+    const response = await createCategoryListApiResponse();
 
     return {
       count: response.payload.count,
@@ -471,7 +577,7 @@ export class DummyPostCategoryRepository {
 
 export class DummyPostRepository {
   async getPosts(params: PostQueryParams): Promise<PostCursorPageDto> {
-    const response = createPostListApiResponse(
+    const response = await createPostListApiResponse(
       params.categoryId,
       params.cursor ?? null,
     );
@@ -501,7 +607,7 @@ export class DummyPostRepository {
   }
 
   async getPostById(postId: string): Promise<PostDetailDto | null> {
-    const response = createPostDetailApiResponse(postId);
+    const response = await createPostDetailApiResponse(postId);
 
     if (!response) {
       return null;
@@ -571,6 +677,35 @@ export class BrowserDummyPostRepository {
       (await response.json()) as ApiResponse<CollectionPayload<PostApiItem>>;
 
     return mapPostListApiResponseToDto(responseBody);
+  }
+
+  async createPost(requestBody: SavePostRequestDto): Promise<number> {
+    const response = await fetch("/api/posts", {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    return response.status;
+  }
+
+  async updatePost(
+    postId: string,
+    requestBody: SavePostRequestDto,
+  ): Promise<number> {
+    const response = await fetch(`/api/posts/${postId}`, {
+      method: "PUT",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    return response.status;
   }
 }
 
