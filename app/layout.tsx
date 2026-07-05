@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getCurrentServerAuthentication } from "@/app/login/server-auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,11 +18,18 @@ const navigationItems = [
   },
 ];
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const authentication = await getCurrentServerAuthentication();
+  const memberDisplayName =
+    (authentication.isAuthenticated &&
+      typeof authentication.claims.nickname === "string" &&
+      authentication.claims.nickname.trim()) ||
+    "Login";
+
   return (
     <html lang="en" className="h-full antialiased">
       <body
@@ -72,7 +80,7 @@ export default function RootLayout({
                   href="/login"
                   className="cursor-pointer text-[21px] text-white transition-colors hover:text-zinc-300"
                 >
-                  Login
+                  {memberDisplayName}
                 </Link>
               </div>
             </div>

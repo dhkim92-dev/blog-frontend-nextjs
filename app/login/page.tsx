@@ -1,12 +1,32 @@
-export default function LoginPage() {
+import "./login-view.css";
+import LoginView from "./login-view";
+import { getGithubOAuthAuthorizeUrl } from "./auth-session";
+
+const oauthProviders = [
+  {
+    id: "github",
+    label: "GitHub",
+    imageSrc: "/github.png",
+    authorizeUrl: getGithubOAuthAuthorizeUrl(),
+  },
+];
+
+type LoginPageProps = {
+  searchParams: Promise<{
+    error?: string | string[];
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const initialErrorCode = Array.isArray(resolvedSearchParams.error)
+    ? resolvedSearchParams.error[0]
+    : resolvedSearchParams.error;
+
   return (
-    <section className="flex flex-1 items-center justify-center px-6 py-16">
-      <div className="text-center">
-        <h1 className="text-[35px] font-semibold text-white">Login</h1>
-        <p className="mt-3 text-[19px] text-zinc-400">
-          Login page is not implemented yet.
-        </p>
-      </div>
-    </section>
+    <LoginView
+      oauthProviders={oauthProviders}
+      initialErrorCode={initialErrorCode ?? null}
+    />
   );
 }
