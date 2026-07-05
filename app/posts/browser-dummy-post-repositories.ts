@@ -1,3 +1,10 @@
+import {
+  getApiMessage,
+  getApiPayload,
+  parseApiEnvelope,
+  type ApiEnvelope,
+} from "@/app/shared/api-envelope";
+
 export type PostCategoryDto = {
   id: string;
   name: string;
@@ -51,13 +58,6 @@ export type SavePostCategoryRequestDto = {
   name: string;
 };
 
-type ApiResponse<TPayload> = {
-  status: number;
-  payload: TPayload;
-  message: string;
-  code: string;
-};
-
 type CollectionPayload<TItem> = {
   count: number;
   items: TItem[];
@@ -86,7 +86,7 @@ function extractCursor(nextUrl: string | null) {
 }
 
 function mapPostListApiResponseToDto(
-  response: ApiResponse<CollectionPayload<PostApiItem>>,
+  response: ApiEnvelope<CollectionPayload<PostApiItem>>,
 ): PostCursorPageDto {
   return {
     count: response.payload.count,
@@ -130,7 +130,11 @@ export class BrowserDummyPostRepository {
       cache: "no-store",
     });
     const responseBody =
-      (await response.json()) as ApiResponse<CollectionPayload<PostApiItem>>;
+      await parseApiEnvelope<CollectionPayload<PostApiItem>>(response);
+
+    if (!responseBody) {
+      throw new Error("Invalid posts response.");
+    }
 
     return mapPostListApiResponseToDto(responseBody);
   }
@@ -169,11 +173,11 @@ export class BrowserDummyPostRepository {
       method: "DELETE",
       cache: "no-store",
     });
-    const responseBody = (await response.json()) as ApiResponse<null>;
+    const responseBody = await parseApiEnvelope<null>(response);
 
     return {
       status: response.status,
-      message: responseBody.message,
+      message: getApiMessage(responseBody),
     };
   }
 }
@@ -185,9 +189,14 @@ export class BrowserDummyPostCategoryRepository {
       cache: "no-store",
     });
     const responseBody =
-      (await response.json()) as ApiResponse<CollectionPayload<PostCategoryDto>>;
+      await parseApiEnvelope<CollectionPayload<PostCategoryDto>>(response);
+    const payload = getApiPayload(responseBody);
 
-    return responseBody.payload.items;
+    if (!payload) {
+      throw new Error("Invalid post categories response.");
+    }
+
+    return payload.items;
   }
 
   async createCategory(
@@ -201,11 +210,11 @@ export class BrowserDummyPostCategoryRepository {
       },
       body: JSON.stringify(requestBody),
     });
-    const responseBody = (await response.json()) as ApiResponse<null>;
+    const responseBody = await parseApiEnvelope<null>(response);
 
     return {
       status: response.status,
-      message: responseBody.message,
+      message: getApiMessage(responseBody),
     };
   }
 
@@ -221,11 +230,11 @@ export class BrowserDummyPostCategoryRepository {
       },
       body: JSON.stringify(requestBody),
     });
-    const responseBody = (await response.json()) as ApiResponse<null>;
+    const responseBody = await parseApiEnvelope<null>(response);
 
     return {
       status: response.status,
-      message: responseBody.message,
+      message: getApiMessage(responseBody),
     };
   }
 
@@ -234,11 +243,11 @@ export class BrowserDummyPostCategoryRepository {
       method: "DELETE",
       cache: "no-store",
     });
-    const responseBody = (await response.json()) as ApiResponse<null>;
+    const responseBody = await parseApiEnvelope<null>(response);
 
     return {
       status: response.status,
-      message: responseBody.message,
+      message: getApiMessage(responseBody),
     };
   }
 }

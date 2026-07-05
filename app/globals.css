@@ -25,6 +25,59 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.command-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(1.5px);
+}
+
+.command-loading-bar-track {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.command-loading-bar {
+  width: 32%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), #ffffff);
+  animation: command-loading-bar 0.75s ease-in-out infinite;
+}
+
+.command-loading-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  border-top-color: #ffffff;
+  border-radius: 9999px;
+  animation: command-loading-spin 0.7s linear infinite;
+}
+
+@keyframes command-loading-bar {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+@keyframes command-loading-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .hide-scrollbar {
   scrollbar-width: none;
 }

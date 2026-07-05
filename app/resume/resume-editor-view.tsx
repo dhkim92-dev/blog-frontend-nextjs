@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useCommandLoading } from "@/app/shared/command-loading-provider";
 import MarkdownEditorView from "@/app/shared/markdown-editor-view";
 import { browserDummyResumeRepository } from "./browser-dummy-resume-repositories";
 import type { ResumeDetailDto, SaveResumeRequestDto } from "./resume-types";
@@ -13,20 +13,10 @@ type ResumeEditorViewProps = {
 export default function ResumeEditorView({
   initialResume,
 }: ResumeEditorViewProps) {
-  const router = useRouter();
-  const redirectTimeoutRef = useRef<number | null>(null);
+  const { startCommand } = useCommandLoading();
   const [content, setContent] = useState(initialResume?.content ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (redirectTimeoutRef.current !== null) {
-        window.clearTimeout(redirectTimeoutRef.current);
-      }
-    };
-  }, []);
 
   async function handleSubmit() {
     if (isSubmitting) {
@@ -40,6 +30,8 @@ export default function ResumeEditorView({
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    const command = startCommand();
+    let shouldDismissCommand = true;
 
     const requestBody: SaveResumeRequestDto = {
       content,
@@ -55,23 +47,24 @@ export default function ResumeEditorView({
         return;
       }
 
-      setToastMessage("이력서가 저장되었습니다");
-      redirectTimeoutRef.current = window.setTimeout(() => {
-        router.push("/resume");
-        router.refresh();
-      }, 900);
+      shouldDismissCommand = false;
+      await command.redirect("/resume");
     } finally {
+      if (shouldDismissCommand) {
+        await command.dismiss();
+      }
+
       setIsSubmitting(false);
     }
   }
 
   function handleCancel() {
     if (window.history.length > 1) {
-      router.back();
+      window.history.back();
       return;
     }
 
-    router.push("/resume");
+    window.location.assign("/resume");
   }
 
   return (
@@ -89,12 +82,6 @@ export default function ResumeEditorView({
       {errorMessage ? (
         <div className="post-editor-feedback" role="alert">
           {errorMessage}
-        </div>
-      ) : null}
-
-      {toastMessage ? (
-        <div className="post-editor-toast" role="status" aria-live="polite">
-          {toastMessage}
         </div>
       ) : null}
     </section>

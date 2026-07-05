@@ -9,7 +9,7 @@ import {
 } from "@/app/login/auth-session";
 import { accessTokenSessionStore } from "@/app/login/access-token-session-store";
 
-type ApiServerFetchResult = {
+export type ApiServerFetchResult = {
   upstreamResponse: Response;
   refreshTokenRemoved: boolean;
   refreshedTokens: LoginTokenPayload | null;
@@ -188,7 +188,10 @@ export async function fetchApiServer(
     };
   }
 
-  if (upstreamResponse.status !== 401 || !refreshToken) {
+  if (
+    (upstreamResponse.status !== 401 && upstreamResponse.status !== 403) ||
+    !refreshToken
+  ) {
     return {
       upstreamResponse,
       refreshTokenRemoved: false,
@@ -206,6 +209,13 @@ export async function fetchApiServer(
       refreshedTokens: null,
       sessionId,
     };
+  }
+
+  if (sessionId) {
+    await accessTokenSessionStore.set(
+      sessionId,
+      reissueResult.refreshedTokens.accessToken,
+    );
   }
 
   const retryResponse = await fetch(input, {

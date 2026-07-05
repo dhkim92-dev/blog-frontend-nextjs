@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCommandLoading } from "@/app/shared/command-loading-provider";
 import {
   browserDummyPostCategoryRepository,
   type PostCategoryDto,
@@ -14,18 +14,12 @@ type PostCategoryEditorViewProps = {
 export default function PostCategoryEditorView({
   initialCategories,
 }: PostCategoryEditorViewProps) {
-  const router = useRouter();
-  const [categories, setCategories] = useState(initialCategories);
+  const { startCommand } = useCommandLoading();
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  async function refreshCategories() {
-    const nextCategories = await browserDummyPostCategoryRepository.getCategories();
-    setCategories(nextCategories);
-  }
 
   function startEditing(category: PostCategoryDto) {
     setEditingCategoryId(category.id);
@@ -52,6 +46,8 @@ export default function PostCategoryEditorView({
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    const command = startCommand();
+    let shouldDismissCommand = true;
 
     try {
       const result = await browserDummyPostCategoryRepository.createCategory({
@@ -64,9 +60,13 @@ export default function PostCategoryEditorView({
       }
 
       setNewCategoryName("");
-      await refreshCategories();
-      router.refresh();
+      shouldDismissCommand = false;
+      await command.redirect();
     } finally {
+      if (shouldDismissCommand) {
+        await command.dismiss();
+      }
+
       setIsSubmitting(false);
     }
   }
@@ -85,6 +85,8 @@ export default function PostCategoryEditorView({
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    const command = startCommand();
+    let shouldDismissCommand = true;
 
     try {
       const result = await browserDummyPostCategoryRepository.updateCategory(
@@ -94,15 +96,19 @@ export default function PostCategoryEditorView({
         },
       );
 
-      if (result.status !== 200) {
+      if (result.status !== 200 && result.status !== 204) {
         setErrorMessage(result.message);
         return;
       }
 
       cancelEditing();
-      await refreshCategories();
-      router.refresh();
+      shouldDismissCommand = false;
+      await command.redirect();
     } finally {
+      if (shouldDismissCommand) {
+        await command.dismiss();
+      }
+
       setIsSubmitting(false);
     }
   }
@@ -114,12 +120,14 @@ export default function PostCategoryEditorView({
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    const command = startCommand();
+    let shouldDismissCommand = true;
 
     try {
       const result =
         await browserDummyPostCategoryRepository.deleteCategory(categoryId);
 
-      if (result.status !== 200) {
+      if (result.status !== 204) {
         setErrorMessage(result.message);
         return;
       }
@@ -128,9 +136,13 @@ export default function PostCategoryEditorView({
         cancelEditing();
       }
 
-      await refreshCategories();
-      router.refresh();
+      shouldDismissCommand = false;
+      await command.redirect();
     } finally {
+      if (shouldDismissCommand) {
+        await command.dismiss();
+      }
+
       setIsSubmitting(false);
     }
   }
@@ -146,7 +158,7 @@ export default function PostCategoryEditorView({
         </div>
 
         <div className="post-category-editor-list">
-          {categories.map((category) => {
+          {initialCategories.map((category) => {
             const isEditing = category.id === editingCategoryId;
 
             return (

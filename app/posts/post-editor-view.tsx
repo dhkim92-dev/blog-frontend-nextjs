@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useCommandLoading } from "@/app/shared/command-loading-provider";
 import MarkdownEditorView from "@/app/shared/markdown-editor-view";
 import {
   browserDummyPostRepository,
@@ -21,8 +21,7 @@ export default function PostEditorView({
   initialPost,
   mode,
 }: PostEditorViewProps) {
-  const router = useRouter();
-  const redirectTimeoutRef = useRef<number | null>(null);
+  const { startCommand } = useCommandLoading();
   const isEditMode = mode === "edit";
   const [selectedCategoryId, setSelectedCategoryId] = useState(
     initialPost?.category.id ?? categories[0]?.id ?? "",
@@ -31,15 +30,6 @@ export default function PostEditorView({
   const [content, setContent] = useState(initialPost?.content ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (redirectTimeoutRef.current !== null) {
-        window.clearTimeout(redirectTimeoutRef.current);
-      }
-    };
-  }, []);
 
   async function handleSubmit() {
     if (isSubmitting) {
@@ -56,6 +46,8 @@ export default function PostEditorView({
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    const command = startCommand();
+    let shouldDismissCommand = true;
 
     const requestBody: SavePostRequestDto = {
       categoryId: selectedCategoryId,
@@ -78,22 +70,24 @@ export default function PostEditorView({
         return;
       }
 
-      setToastMessage("게시물이 작성되었습니다");
-      redirectTimeoutRef.current = window.setTimeout(() => {
-        router.push("/posts");
-      }, 900);
+      shouldDismissCommand = false;
+      await command.redirect("/posts");
     } finally {
+      if (shouldDismissCommand) {
+        await command.dismiss();
+      }
+
       setIsSubmitting(false);
     }
   }
 
   function handleCancel() {
     if (window.history.length > 1) {
-      router.back();
+      window.history.back();
       return;
     }
 
-    router.push("/posts");
+    window.location.assign("/posts");
   }
 
   return (
@@ -146,12 +140,6 @@ export default function PostEditorView({
       {errorMessage ? (
         <div className="post-editor-feedback" role="alert">
           {errorMessage}
-        </div>
-      ) : null}
-
-      {toastMessage ? (
-        <div className="post-editor-toast" role="status" aria-live="polite">
-          {toastMessage}
         </div>
       ) : null}
     </section>

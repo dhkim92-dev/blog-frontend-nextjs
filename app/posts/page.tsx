@@ -4,8 +4,8 @@ import {
   isAdminServerAuthentication,
 } from "@/app/login/server-auth";
 import AdminPageGuard from "@/app/shared/admin-page-guard";
+import { apiPostCategoryRepository } from "./api-post-category-repository";
 import {
-  dummyPostCategoryRepository,
   dummyPostRepository,
 } from "./dummy-post-repositories";
 import PostEditorView from "./post-editor-view";
@@ -33,7 +33,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
       return <AdminPageGuard fallbackHref="/posts" />;
     }
 
-    const categories = await dummyPostCategoryRepository.getCategories();
+    const categories = await apiPostCategoryRepository.getCategories();
 
     return (
       <PostEditorView categories={categories.items} initialPost={null} mode="create" />
@@ -41,7 +41,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
   }
 
   const [categories, postsPage] = await Promise.all([
-    dummyPostCategoryRepository.getCategories(),
+    apiPostCategoryRepository.getCategories(),
     dummyPostRepository.getPosts({ categoryId: selectedCategoryId }),
   ]);
   const selectedCategoryName =

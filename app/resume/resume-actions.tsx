@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useCommandLoading } from "@/app/shared/command-loading-provider";
 import { browserDummyResumeRepository } from "./browser-dummy-resume-repositories";
 
 type ResumeActionsProps = {
@@ -13,7 +13,7 @@ export default function ResumeActions({
   hasResume,
   canManage,
 }: ResumeActionsProps) {
-  const router = useRouter();
+  const { startCommand } = useCommandLoading();
 
   async function handleDelete() {
     const shouldDelete = window.confirm("이력서를 삭제하시겠습니까?");
@@ -22,14 +22,16 @@ export default function ResumeActions({
       return;
     }
 
+    const command = startCommand();
     const result = await browserDummyResumeRepository.deleteResume();
 
     if (result.status !== 200) {
+      await command.dismiss();
       window.alert(result.message || "이력서 삭제에 실패했습니다.");
       return;
     }
 
-    router.refresh();
+    await command.redirect();
   }
 
   if (!canManage) {

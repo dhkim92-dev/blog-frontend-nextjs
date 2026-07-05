@@ -4,8 +4,8 @@ import {
   isAdminServerAuthentication,
 } from "@/app/login/server-auth";
 import AdminPageGuard from "@/app/shared/admin-page-guard";
+import { apiPostCategoryRepository } from "@/app/posts/api-post-category-repository";
 import {
-  dummyPostCategoryRepository,
   dummyPostRepository,
   type PostDetailDto,
 } from "@/app/posts/dummy-post-repositories";
@@ -73,7 +73,7 @@ export default async function PostDetailPage({
     }
 
     const [categories, post] = await Promise.all([
-      dummyPostCategoryRepository.getCategories(),
+      apiPostCategoryRepository.getCategories(),
       dummyPostRepository.getPostById(postId),
     ]);
 

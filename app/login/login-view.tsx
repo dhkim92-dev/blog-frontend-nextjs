@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { browserAuthFetch } from "@/app/shared/browser-auth-fetch";
+import { useCommandLoading } from "@/app/shared/command-loading-provider";
 
 type OAuthProvider = {
   id: string;
@@ -41,7 +41,7 @@ export default function LoginView({
   oauthProviders,
   initialErrorCode,
 }: LoginViewProps) {
-  const router = useRouter();
+  const { startCommand } = useCommandLoading();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [hasTriedSubmit, setHasTriedSubmit] = useState(false);
@@ -71,6 +71,8 @@ export default function LoginView({
     }
 
     setIsSubmitting(true);
+    const command = startCommand();
+    let shouldDismissCommand = true;
 
     try {
       const response = await browserAuthFetch("/login/email-password", {
@@ -94,11 +96,15 @@ export default function LoginView({
         return;
       }
 
-      router.replace("/");
-      router.refresh();
+      shouldDismissCommand = false;
+      await command.redirect("/", { replace: true });
     } catch {
       setSubmissionErrorMessage("로그인 요청에 실패했습니다.");
     } finally {
+      if (shouldDismissCommand) {
+        await command.dismiss();
+      }
+
       setIsSubmitting(false);
     }
   }

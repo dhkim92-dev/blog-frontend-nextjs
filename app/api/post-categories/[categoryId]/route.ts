@@ -1,9 +1,4 @@
-import { NextResponse } from "next/server";
-import {
-  deletePostCategoryApiResponse,
-  type SavePostCategoryRequestDto,
-  updatePostCategoryApiResponse,
-} from "@/app/posts/dummy-post-repositories";
+import { forwardPostCategoryApiRequest } from "../proxy";
 
 type RouteContext = {
   params: Promise<{
@@ -13,39 +8,29 @@ type RouteContext = {
 
 export async function PUT(request: Request, context: RouteContext) {
   const { categoryId } = await context.params;
-  const requestBody = (await request.json()) as SavePostCategoryRequestDto;
-  const response = await updatePostCategoryApiResponse(categoryId, requestBody);
 
-  if (!response) {
-    return NextResponse.json(
-      {
-        status: 404,
-        payload: null,
-        message: "category not found",
-        code: "CATEGORY_NOT_FOUND",
+  return forwardPostCategoryApiRequest(
+    request,
+    `/api/v1/post-categories/${categoryId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type":
+          request.headers.get("content-type") ?? "application/json",
       },
-      { status: 404 },
-    );
-  }
-
-  return NextResponse.json(response, { status: response.status });
+      body: await request.text(),
+    },
+  );
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   const { categoryId } = await context.params;
-  const response = await deletePostCategoryApiResponse(categoryId);
 
-  if (!response) {
-    return NextResponse.json(
-      {
-        status: 404,
-        payload: null,
-        message: "category not found",
-        code: "CATEGORY_NOT_FOUND",
-      },
-      { status: 404 },
-    );
-  }
-
-  return NextResponse.json(response, { status: response.status });
+  return forwardPostCategoryApiRequest(
+    request,
+    `/api/v1/post-categories/${categoryId}`,
+    {
+      method: "DELETE",
+    },
+  );
 }

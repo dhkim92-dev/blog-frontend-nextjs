@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useCommandLoading } from "@/app/shared/command-loading-provider";
 import { browserDummyPostRepository } from "./browser-dummy-post-repositories";
 
 type PostDetailActionsProps = {
@@ -11,7 +11,7 @@ type PostDetailActionsProps = {
 export default function PostDetailActions({
   postId,
 }: PostDetailActionsProps) {
-  const router = useRouter();
+  const { startCommand } = useCommandLoading();
 
   async function handleDelete() {
     const shouldDelete = window.confirm("게시물을 삭제하시겠습니까?");
@@ -20,15 +20,16 @@ export default function PostDetailActions({
       return;
     }
 
+    const command = startCommand();
     const result = await browserDummyPostRepository.deletePost(postId);
 
     if (result.status !== 200) {
+      await command.dismiss();
       window.alert(result.message || "게시물 삭제에 실패했습니다.");
       return;
     }
 
-    router.push("/posts");
-    router.refresh();
+    await command.redirect("/posts");
   }
 
   return (

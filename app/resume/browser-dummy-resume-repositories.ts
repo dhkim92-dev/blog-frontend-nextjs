@@ -1,11 +1,8 @@
+import {
+  getApiMessage,
+  parseApiEnvelope,
+} from "@/app/shared/api-envelope";
 import type { SaveResumeRequestDto } from "./resume-types";
-
-type ApiResponse<TPayload> = {
-  status: number;
-  payload: TPayload;
-  message: string;
-  code: string;
-};
 
 type ApiResult = {
   status: number;
@@ -22,11 +19,11 @@ export class BrowserDummyResumeRepository {
       },
       body: JSON.stringify(requestBody),
     });
-    const responseBody = (await response.json()) as ApiResponse<null>;
+    const responseBody = await parseApiEnvelope<null>(response);
 
     return {
       status: response.status,
-      message: responseBody.message,
+      message: getApiMessage(responseBody),
     };
   }
 
@@ -39,11 +36,11 @@ export class BrowserDummyResumeRepository {
       },
       body: JSON.stringify(requestBody),
     });
-    const responseBody = (await response.json()) as ApiResponse<null>;
+    const responseBody = await parseApiEnvelope<null>(response);
 
     return {
       status: response.status,
-      message: responseBody.message,
+      message: getApiMessage(responseBody),
     };
   }
 
@@ -52,11 +49,11 @@ export class BrowserDummyResumeRepository {
       method: "DELETE",
       cache: "no-store",
     });
-    const responseBody = (await response.json()) as ApiResponse<null>;
+    const responseBody = await parseApiEnvelope<null>(response);
 
     return {
       status: response.status,
-      message: responseBody.message,
+      message: getApiMessage(responseBody),
     };
   }
 }
