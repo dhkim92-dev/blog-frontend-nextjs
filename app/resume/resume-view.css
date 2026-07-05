@@ -1,0 +1,149 @@
+.resume-page-root {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  width: 100%;
+  padding: 72px 24px 96px;
+  background: #000000;
+}
+
+.resume-view-root {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: min(1040px, 100%);
+  min-width: 0;
+}
+
+.resume-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.resume-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resume-eyebrow {
+  color: #71717a;
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.resume-meta {
+  color: #a1a1aa;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.resume-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resume-action-link,
+.resume-action-button {
+  border: 0;
+  background: transparent;
+  color: #a3a3a3;
+  font: inherit;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.resume-action-link:hover,
+.resume-action-button:hover {
+  color: #ffffff;
+}
+
+.resume-action-divider {
+  color: #71717a;
+}
+
+.resume-body {
+  min-width: 0;
+  border: 1px solid #27272a;
+  border-radius: 28px;
+  background: #0b0b0b;
+  overflow: hidden;
+}
+
+.resume-empty-state {
+  display: flex;
+  min-height: 320px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #27272a;
+  border-radius: 28px;
+  background: #0b0b0b;
+  color: #a1a1aa;
+  font-size: 18px;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .resume-page-root {
+    padding: 40px 16px 64px;
+  }
+
+  .resume-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media print {
+  html,
+  body,
+  main,
+  .resume-page-root,
+  .resume-view-root,
+  .resume-body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  header,
+  footer,
+  .resume-header,
+  .resume-actions {
+    display: none !important;
+  }
+
+  .resume-page-root {
+    padding: 0;
+    background: #ffffff;
+    color: #000000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .resume-view-root {
+    width: 100%;
+    gap: 0;
+  }
+
+  .resume-body {
+    border: 0;
+    border-radius: 0;
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .resume-body,
+  .resume-body * {
+    color: #000000 !important;
+  }
+
+  .resume-body a {
+    color: #000000 !important;
+  }
+}

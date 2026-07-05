@@ -1,13 +1,13 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
-import PostDetailMarkdown from "./post-detail-markdown";
+import PostDetailMarkdown from "@/app/posts/post-detail-markdown";
 
-type PostEditorPreviewProps = {
+type MarkdownPreviewProps = {
   content: string;
 };
 
-class PostEditorPreviewErrorBoundary extends Component<
+class MarkdownPreviewErrorBoundary extends Component<
   {
     children: ReactNode;
   },
@@ -46,11 +46,9 @@ class PostEditorPreviewErrorBoundary extends Component<
   }
 }
 
-export default function PostEditorPreview({
-  content,
-}: PostEditorPreviewProps) {
+export default function MarkdownPreview({ content }: MarkdownPreviewProps) {
   return (
-    <PostEditorPreviewErrorBoundary>
+    <MarkdownPreviewErrorBoundary>
       {content.trim().length > 0 ? (
         <PostDetailMarkdown content={content} />
       ) : (
@@ -58,6 +56,6 @@ export default function PostEditorPreview({
           미리보기가 여기에 표시됩니다.
         </div>
       )}
-    </PostEditorPreviewErrorBoundary>
+    </MarkdownPreviewErrorBoundary>
   );
 }

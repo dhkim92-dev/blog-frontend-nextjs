@@ -1,0 +1,58 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { browserDummyResumeRepository } from "./browser-dummy-resume-repositories";
+
+type ResumeActionsProps = {
+  hasResume: boolean;
+};
+
+export default function ResumeActions({ hasResume }: ResumeActionsProps) {
+  const router = useRouter();
+
+  async function handleDelete() {
+    const shouldDelete = window.confirm("이력서를 삭제하시겠습니까?");
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    const result = await browserDummyResumeRepository.deleteResume();
+
+    if (result.status !== 200) {
+      window.alert(result.message || "이력서 삭제에 실패했습니다.");
+      return;
+    }
+
+    router.refresh();
+  }
+
+  if (!hasResume) {
+    return (
+      <div className="resume-actions">
+        <Link href="/resume?mode=edit" className="resume-action-link">
+          추가
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="resume-actions">
+      <Link href="/resume?mode=edit" className="resume-action-link">
+        수정
+      </Link>
+      <span className="resume-action-divider">·</span>
+      <button
+        type="button"
+        className="resume-action-button"
+        onClick={() => {
+          void handleDelete();
+        }}
+      >
+        삭제
+      </button>
+    </div>
+  );
+}
