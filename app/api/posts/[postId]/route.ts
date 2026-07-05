@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   createPostDetailApiResponse,
+  deletePostApiResponse,
   type SavePostRequestDto,
   updatePostApiResponse,
 } from "@/app/posts/dummy-post-repositories";
@@ -51,4 +52,23 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   return NextResponse.json(response, { status: 200 });
+}
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  const { postId } = await context.params;
+  const response = await deletePostApiResponse(postId);
+
+  if (!response) {
+    return NextResponse.json(
+      {
+        status: 404,
+        payload: null,
+        message: "post not found",
+        code: "POST_NOT_FOUND",
+      },
+      { status: 404 },
+    );
+  }
+
+  return NextResponse.json(response, { status: response.status });
 }

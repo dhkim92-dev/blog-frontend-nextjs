@@ -62,9 +62,26 @@
   text-align: right;
 }
 
-.post-detail-actions[data-visible="false"] {
-  visibility: hidden;
-  pointer-events: none;
+.post-detail-action-link,
+.post-detail-action-button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #a3a3a3;
+  font: inherit;
+  line-height: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.post-detail-action-link:hover,
+.post-detail-action-button:hover {
+  color: #ffffff;
+}
+
+.post-detail-action-divider {
+  color: #71717a;
 }
 
 .post-detail-title-heading {

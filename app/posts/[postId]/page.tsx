@@ -4,6 +4,7 @@ import {
   dummyPostRepository,
   type PostDetailDto,
 } from "@/app/posts/dummy-post-repositories";
+import PostDetailActions from "@/app/posts/post-detail-actions";
 import PostDetailMarkdown from "@/app/posts/post-detail-markdown";
 import PostEditorView from "@/app/posts/post-editor-view";
 import "../post-detail-view.css";
@@ -37,20 +38,11 @@ function formatPostDate(value: string) {
 }
 
 function PostDetailTitle({ post }: { post: PostDetailDto }) {
-  const canManagePost = false;
-
   return (
     <div className="post-detail-title">
       <div className="post-detail-title-top">
         <div className="post-detail-category">{post.category.name}</div>
-        <div
-          className="post-detail-actions"
-          data-visible={canManagePost ? "true" : "false"}
-        >
-          <span>수정</span>
-          <span>|</span>
-          <span>삭제</span>
-        </div>
+        <PostDetailActions postId={post.id} />
       </div>
       <h1 className="post-detail-title-heading">{post.title}</h1>
       <div className="post-detail-title-meta">

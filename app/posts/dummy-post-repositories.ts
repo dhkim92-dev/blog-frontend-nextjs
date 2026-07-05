@@ -52,6 +52,10 @@ export type SavePostRequestDto = {
   status: string;
 };
 
+export type SavePostCategoryRequestDto = {
+  name: string;
+};
+
 type ApiResponse<TPayload> = {
   status: number;
   payload: TPayload;
@@ -99,7 +103,7 @@ const writer = {
   nickname: "dohoon",
 };
 
-const categorySeeds: CategorySeed[] = [
+const initialCategorySeeds: CategorySeed[] = [
   { id: "7ff1532d-7d25-4c7b-a182-f65dd0cce001", name: "Backend" },
   { id: "7ff1532d-7d25-4c7b-a182-f65dd0cce002", name: "Infrastructure" },
   { id: "7ff1532d-7d25-4c7b-a182-f65dd0cce003", name: "DevOps" },
@@ -108,40 +112,40 @@ const categorySeeds: CategorySeed[] = [
 ];
 
 const categoryPostTargets = [
-  { categoryId: categorySeeds[0].id, count: 50 },
-  { categoryId: categorySeeds[1].id, count: 8 },
-  { categoryId: categorySeeds[2].id, count: 8 },
-  { categoryId: categorySeeds[3].id, count: 7 },
-  { categoryId: categorySeeds[4].id, count: 7 },
+  { categoryId: initialCategorySeeds[0].id, count: 50 },
+  { categoryId: initialCategorySeeds[1].id, count: 8 },
+  { categoryId: initialCategorySeeds[2].id, count: 8 },
+  { categoryId: initialCategorySeeds[3].id, count: 7 },
+  { categoryId: initialCategorySeeds[4].id, count: 7 },
 ];
 
 const postTitleTemplates: Record<string, string[]> = {
-  [categorySeeds[0].id]: [
+  [initialCategorySeeds[0].id]: [
     "Designing Spring Boot modules for a growing service",
     "Applying transaction boundaries in domain services",
     "Building reliable cache invalidation with Redis",
     "Breaking down a microservice migration plan",
     "Schema change rollout without long write locks",
   ],
-  [categorySeeds[1].id]: [
+  [initialCategorySeeds[1].id]: [
     "Kubernetes probes that actually catch production issues",
     "Using Terraform workspaces without hiding drift",
     "EKS deployment checklists for small teams",
     "Blue-green rollout notes for container workloads",
   ],
-  [categorySeeds[2].id]: [
+  [initialCategorySeeds[2].id]: [
     "Kafka retry topics without masking real failures",
     "CI pipelines that fail fast and stay readable",
     "Jenkins pipelines for multi-environment delivery",
     "Release automation guardrails for small teams",
   ],
-  [categorySeeds[3].id]: [
+  [initialCategorySeeds[3].id]: [
     "PostgreSQL indexing notes from a recent bottleneck",
     "Database connection pool tuning in a busy API",
     "Query plan review notes for mixed workloads",
     "Backup restore drills for production databases",
   ],
-  [categorySeeds[4].id]: [
+  [initialCategorySeeds[4].id]: [
     "What changed in my backend interview preparation",
     "Job notes from operating services with limited headcount",
     "How I review backend incidents after release days",
@@ -156,8 +160,8 @@ function createPostTitle(categoryId: string, categorySequence: number) {
   return `${template} ${categorySequence}`;
 }
 
-function getCategoryById(categoryId: string) {
-  const category = categorySeeds.find((item) => item.id === categoryId);
+function getInitialCategoryById(categoryId: string) {
+  const category = initialCategorySeeds.find((item) => item.id === categoryId);
 
   if (!category) {
     throw new Error(`Unknown category: ${categoryId}`);
@@ -290,7 +294,7 @@ function createPostSeeds(): PostSeed[] {
   }
 
   return categoryQueue.map((categoryId, index) => {
-    const category = getCategoryById(categoryId);
+    const category = getInitialCategoryById(categoryId);
     const categorySequence = (categorySequences.get(categoryId) ?? 0) + 1;
     const idSuffix = String(index + 1).padStart(12, "0");
     const createdAt = new Date(
@@ -322,6 +326,47 @@ function createPostSeeds(): PostSeed[] {
 }
 
 const initialPostSeeds = createPostSeeds();
+
+async function readCategorySeeds() {
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const storeDirectory = path.join("/private/tmp", "blog-nextjs-dummy-post-store");
+  const storeFilePath = path.join(storeDirectory, "categories.json");
+
+  try {
+    const storedValue = await fs.readFile(storeFilePath, "utf8");
+    const parsedValue = JSON.parse(storedValue) as CategorySeed[];
+
+    return Array.isArray(parsedValue) ? parsedValue : [...initialCategorySeeds];
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      throw error;
+    }
+
+    await fs.mkdir(storeDirectory, { recursive: true });
+    await fs.writeFile(
+      storeFilePath,
+      JSON.stringify(initialCategorySeeds, null, 2),
+      "utf8",
+    );
+
+    return [...initialCategorySeeds];
+  }
+}
+
+async function writeCategorySeeds(categorySeeds: CategorySeed[]) {
+  const fs = await import("node:fs/promises");
+  const path = await import("node:path");
+  const storeDirectory = path.join("/private/tmp", "blog-nextjs-dummy-post-store");
+  const storeFilePath = path.join(storeDirectory, "categories.json");
+
+  await fs.mkdir(storeDirectory, { recursive: true });
+  await fs.writeFile(
+    storeFilePath,
+    JSON.stringify(categorySeeds, null, 2),
+    "utf8",
+  );
+}
 
 async function readPostSeeds() {
   const fs = await import("node:fs/promises");
@@ -366,9 +411,24 @@ async function getCategoryPostCount(categoryId: string) {
   return postSeeds.filter((post) => post.categoryId === categoryId).length;
 }
 
+function getStoredCategoryById(categories: CategorySeed[], categoryId: string) {
+  const category = categories.find((item) => item.id === categoryId);
+
+  if (!category) {
+    throw new Error(`Unknown category: ${categoryId}`);
+  }
+
+  return category;
+}
+
+function normalizeCategoryName(name: string) {
+  return name.trim();
+}
+
 export async function createCategoryListApiResponse(): Promise<
   ApiResponse<CollectionPayload<PostCategoryDto>>
 > {
+  const categorySeeds = await readCategorySeeds();
   const items = await Promise.all(
     categorySeeds.map(async (category) => ({
       id: category.id,
@@ -409,7 +469,10 @@ export async function createPostListApiResponse(
   categoryId: string | null,
   cursor: string | null,
 ): Promise<ApiResponse<CollectionPayload<PostApiItem>>> {
-  const postSeeds = await readPostSeeds();
+  const [postSeeds, categorySeeds] = await Promise.all([
+    readPostSeeds(),
+    readCategorySeeds(),
+  ]);
   const filteredPosts = postSeeds
     .filter((post) => !categoryId || post.categoryId === categoryId)
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
@@ -423,7 +486,7 @@ export async function createPostListApiResponse(
       : null;
 
   const items = pagedPosts.map((post) => {
-    const category = getCategoryById(post.categoryId);
+    const category = getStoredCategoryById(categorySeeds, post.categoryId);
 
     return {
       id: post.id,
@@ -462,14 +525,17 @@ export async function createPostListApiResponse(
 export async function createPostDetailApiResponse(
   postId: string,
 ): Promise<ApiResponse<PostDetailApiItem> | null> {
-  const postSeeds = await readPostSeeds();
+  const [postSeeds, categorySeeds] = await Promise.all([
+    readPostSeeds(),
+    readCategorySeeds(),
+  ]);
   const post = postSeeds.find((item) => item.id === postId);
 
   if (!post) {
     return null;
   }
 
-  const category = getCategoryById(post.categoryId);
+  const category = getStoredCategoryById(categorySeeds, post.categoryId);
 
   return {
     status: 200,
@@ -499,8 +565,11 @@ export async function createPostDetailApiResponse(
 export async function createPostApiResponse(
   requestBody: SavePostRequestDto,
 ): Promise<ApiResponse<null>> {
-  getCategoryById(requestBody.categoryId);
-  const postSeeds = await readPostSeeds();
+  const [postSeeds, categorySeeds] = await Promise.all([
+    readPostSeeds(),
+    readCategorySeeds(),
+  ]);
+  getStoredCategoryById(categorySeeds, requestBody.categoryId);
 
   const now = new Date().toISOString();
 
@@ -530,14 +599,17 @@ export async function updatePostApiResponse(
   postId: string,
   requestBody: SavePostRequestDto,
 ): Promise<ApiResponse<null> | null> {
-  const postSeeds = await readPostSeeds();
+  const [postSeeds, categorySeeds] = await Promise.all([
+    readPostSeeds(),
+    readCategorySeeds(),
+  ]);
   const post = postSeeds.find((item) => item.id === postId);
 
   if (!post) {
     return null;
   }
 
-  getCategoryById(requestBody.categoryId);
+  getStoredCategoryById(categorySeeds, requestBody.categoryId);
 
   post.title = requestBody.title;
   post.categoryId = requestBody.categoryId;
@@ -551,6 +623,154 @@ export async function updatePostApiResponse(
     payload: null,
     message: "post updated",
     code: "POST_UPDATED",
+  };
+}
+
+export async function deletePostApiResponse(
+  postId: string,
+): Promise<ApiResponse<null> | null> {
+  const postSeeds = await readPostSeeds();
+  const postIndex = postSeeds.findIndex((item) => item.id === postId);
+
+  if (postIndex < 0) {
+    return null;
+  }
+
+  postSeeds.splice(postIndex, 1);
+  await writePostSeeds(postSeeds);
+
+  return {
+    status: 200,
+    payload: null,
+    message: "post deleted",
+    code: "POST_DELETED",
+  };
+}
+
+export async function createPostCategoryApiResponse(
+  requestBody: SavePostCategoryRequestDto,
+): Promise<ApiResponse<null>> {
+  const categorySeeds = await readCategorySeeds();
+  const normalizedName = normalizeCategoryName(requestBody.name);
+
+  if (!normalizedName || normalizedName.length > 20) {
+    return {
+      status: 400,
+      payload: null,
+      message: "category name must be between 1 and 20 characters",
+      code: "INVALID_CATEGORY_NAME",
+    };
+  }
+
+  if (
+    categorySeeds.some(
+      (category) => category.name.toLowerCase() === normalizedName.toLowerCase(),
+    )
+  ) {
+    return {
+      status: 409,
+      payload: null,
+      message: "category name already exists",
+      code: "CATEGORY_NAME_CONFLICT",
+    };
+  }
+
+  categorySeeds.push({
+    id: crypto.randomUUID(),
+    name: normalizedName,
+  });
+
+  await writeCategorySeeds(categorySeeds);
+
+  return {
+    status: 201,
+    payload: null,
+    message: "category created",
+    code: "CATEGORY_CREATED",
+  };
+}
+
+export async function updatePostCategoryApiResponse(
+  categoryId: string,
+  requestBody: SavePostCategoryRequestDto,
+): Promise<ApiResponse<null> | null> {
+  const categorySeeds = await readCategorySeeds();
+  const category = categorySeeds.find((item) => item.id === categoryId);
+
+  if (!category) {
+    return null;
+  }
+
+  const normalizedName = normalizeCategoryName(requestBody.name);
+
+  if (!normalizedName || normalizedName.length > 20) {
+    return {
+      status: 400,
+      payload: null,
+      message: "category name must be between 1 and 20 characters",
+      code: "INVALID_CATEGORY_NAME",
+    };
+  }
+
+  if (
+    categorySeeds.some(
+      (item) =>
+        item.id !== categoryId &&
+        item.name.toLowerCase() === normalizedName.toLowerCase(),
+    )
+  ) {
+    return {
+      status: 409,
+      payload: null,
+      message: "category name already exists",
+      code: "CATEGORY_NAME_CONFLICT",
+    };
+  }
+
+  category.name = normalizedName;
+
+  await writeCategorySeeds(categorySeeds);
+
+  return {
+    status: 200,
+    payload: null,
+    message: "category updated",
+    code: "CATEGORY_UPDATED",
+  };
+}
+
+export async function deletePostCategoryApiResponse(
+  categoryId: string,
+): Promise<ApiResponse<null> | null> {
+  const [categorySeeds, postSeeds] = await Promise.all([
+    readCategorySeeds(),
+    readPostSeeds(),
+  ]);
+  const categoryIndex = categorySeeds.findIndex((item) => item.id === categoryId);
+
+  if (categoryIndex < 0) {
+    return null;
+  }
+
+  const postCount = postSeeds.filter((post) => post.categoryId === categoryId).length;
+
+  if (postCount > 0) {
+    return {
+      status: 409,
+      payload: null,
+      message: "cannot delete category with posts",
+      code: "CATEGORY_HAS_POSTS",
+    };
+  }
+
+  categorySeeds.splice(categoryIndex, 1);
+  await writeCategorySeeds(categorySeeds);
+
+  return {
+    status: 200,
+    payload: null,
+    message: "category deleted",
+    code: "CATEGORY_DELETED",
   };
 }
 

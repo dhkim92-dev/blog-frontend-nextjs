@@ -47,6 +47,10 @@ export type SavePostRequestDto = {
   status: string;
 };
 
+export type SavePostCategoryRequestDto = {
+  name: string;
+};
+
 type ApiResponse<TPayload> = {
   status: number;
   payload: TPayload;
@@ -64,6 +68,11 @@ type PostApiItem = PostListItemDto & {
   _links: {
     next: string | null;
   };
+};
+
+type ApiResult = {
+  status: number;
+  message: string;
 };
 
 function extractCursor(nextUrl: string | null) {
@@ -154,6 +163,86 @@ export class BrowserDummyPostRepository {
 
     return response.status;
   }
+
+  async deletePost(postId: string): Promise<ApiResult> {
+    const response = await fetch(`/api/posts/${postId}`, {
+      method: "DELETE",
+      cache: "no-store",
+    });
+    const responseBody = (await response.json()) as ApiResponse<null>;
+
+    return {
+      status: response.status,
+      message: responseBody.message,
+    };
+  }
+}
+
+export class BrowserDummyPostCategoryRepository {
+  async getCategories(): Promise<PostCategoryDto[]> {
+    const response = await fetch("/api/post-categories", {
+      method: "GET",
+      cache: "no-store",
+    });
+    const responseBody =
+      (await response.json()) as ApiResponse<CollectionPayload<PostCategoryDto>>;
+
+    return responseBody.payload.items;
+  }
+
+  async createCategory(
+    requestBody: SavePostCategoryRequestDto,
+  ): Promise<ApiResult> {
+    const response = await fetch("/api/post-categories", {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+    const responseBody = (await response.json()) as ApiResponse<null>;
+
+    return {
+      status: response.status,
+      message: responseBody.message,
+    };
+  }
+
+  async updateCategory(
+    categoryId: string,
+    requestBody: SavePostCategoryRequestDto,
+  ): Promise<ApiResult> {
+    const response = await fetch(`/api/post-categories/${categoryId}`, {
+      method: "PUT",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+    const responseBody = (await response.json()) as ApiResponse<null>;
+
+    return {
+      status: response.status,
+      message: responseBody.message,
+    };
+  }
+
+  async deleteCategory(categoryId: string): Promise<ApiResult> {
+    const response = await fetch(`/api/post-categories/${categoryId}`, {
+      method: "DELETE",
+      cache: "no-store",
+    });
+    const responseBody = (await response.json()) as ApiResponse<null>;
+
+    return {
+      status: response.status,
+      message: responseBody.message,
+    };
+  }
 }
 
 export const browserDummyPostRepository = new BrowserDummyPostRepository();
+export const browserDummyPostCategoryRepository =
+  new BrowserDummyPostCategoryRepository();

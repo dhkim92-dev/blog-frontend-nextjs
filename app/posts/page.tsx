@@ -41,9 +41,18 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
     <section className="posts-page-root">
       <div className="posts-page-inner">
         <aside className="post-category-list-container">
-          <Link href="/posts" className="post-category-header">
-            Category
-          </Link>
+          <div className="post-category-header-row">
+            <Link href="/posts" className="post-category-header">
+              Category
+            </Link>
+            <Link
+              href="/posts/categories/edit"
+              className="post-category-manage-link"
+              aria-label="카테고리 편집"
+            >
+              ⚙
+            </Link>
+          </div>
           <div className="post-category-list hide-scrollbar">
             {categories.items.map((category) => {
               const isSelected = category.id === selectedCategoryId;
@@ -65,6 +74,9 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
         <div className="post-list-container">
           <div className="post-list-header">
             <h1>{selectedCategoryName}</h1>
+            <Link href="/posts?mode=edit" className="post-list-write-link">
+              글쓰기
+            </Link>
           </div>
           <div className="post-list-divider" />
           <PostsView
