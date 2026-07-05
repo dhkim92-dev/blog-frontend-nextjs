@@ -1,6 +1,11 @@
 import PostDetailMarkdown from "@/app/posts/post-detail-markdown";
 import "@/app/posts/post-detail-view.css";
 import "@/app/posts/post-editor-view.css";
+import {
+  getCurrentServerAuthentication,
+  isAdminServerAuthentication,
+} from "@/app/login/server-auth";
+import AdminPageGuard from "@/app/shared/admin-page-guard";
 import { dummyResumeRepository } from "./dummy-resume-repositories";
 import ResumeActions from "./resume-actions";
 import ResumeEditorView from "./resume-editor-view";
@@ -27,9 +32,15 @@ function formatResumeDate(value: string) {
 export default async function ResumePage({ searchParams }: ResumePageProps) {
   const resolvedSearchParams = await searchParams;
   const mode = resolvedSearchParams?.mode ?? null;
+  const authentication = await getCurrentServerAuthentication();
+  const isAdmin = isAdminServerAuthentication(authentication);
   const resume = await dummyResumeRepository.getResume();
 
   if (mode === "edit") {
+    if (!isAdmin) {
+      return <AdminPageGuard fallbackHref="/resume" />;
+    }
+
     return <ResumeEditorView initialResume={resume} />;
   }
 
@@ -47,7 +58,7 @@ export default async function ResumePage({ searchParams }: ResumePageProps) {
               <div className="resume-meta">등록된 이력서가 없습니다.</div>
             )}
           </div>
-          <ResumeActions hasResume={resume !== null} />
+          <ResumeActions hasResume={resume !== null} canManage={isAdmin} />
         </div>
 
         {resume ? (

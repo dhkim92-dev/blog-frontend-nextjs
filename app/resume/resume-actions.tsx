@@ -6,9 +6,13 @@ import { browserDummyResumeRepository } from "./browser-dummy-resume-repositorie
 
 type ResumeActionsProps = {
   hasResume: boolean;
+  canManage: boolean;
 };
 
-export default function ResumeActions({ hasResume }: ResumeActionsProps) {
+export default function ResumeActions({
+  hasResume,
+  canManage,
+}: ResumeActionsProps) {
   const router = useRouter();
 
   async function handleDelete() {
@@ -26,6 +30,10 @@ export default function ResumeActions({ hasResume }: ResumeActionsProps) {
     }
 
     router.refresh();
+  }
+
+  if (!canManage) {
+    return null;
   }
 
   if (!hasResume) {

@@ -1,5 +1,10 @@
 import { notFound } from "next/navigation";
 import {
+  getCurrentServerAuthentication,
+  isAdminServerAuthentication,
+} from "@/app/login/server-auth";
+import AdminPageGuard from "@/app/shared/admin-page-guard";
+import {
   dummyPostCategoryRepository,
   dummyPostRepository,
   type PostDetailDto,
@@ -59,8 +64,14 @@ export default async function PostDetailPage({
   const { postId } = await params;
   const resolvedSearchParams = await searchParams;
   const mode = resolvedSearchParams?.mode ?? null;
+  const authentication = await getCurrentServerAuthentication();
+  const isAdmin = isAdminServerAuthentication(authentication);
 
   if (mode === "edit") {
+    if (!isAdmin) {
+      return <AdminPageGuard fallbackHref={`/posts/${postId}`} />;
+    }
+
     const [categories, post] = await Promise.all([
       dummyPostCategoryRepository.getCategories(),
       dummyPostRepository.getPostById(postId),

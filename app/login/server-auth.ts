@@ -103,3 +103,12 @@ export async function getCurrentServerAuthentication(): Promise<ServerAuthentica
     claims,
   };
 }
+
+export function isAdminServerAuthentication(
+  authentication: ServerAuthentication,
+) {
+  return (
+    authentication.isAuthenticated &&
+    authentication.claims.roles?.includes("ROLE_ADMIN") === true
+  );
+}
