@@ -6,12 +6,12 @@ import {
 import AdminPageGuard from "@/app/shared/admin-page-guard";
 import { apiPostCategoryRepository } from "@/app/posts/api-post-category-repository";
 import {
-  dummyPostRepository,
   type PostDetailDto,
 } from "@/app/posts/dummy-post-repositories";
 import PostDetailActions from "@/app/posts/post-detail-actions";
 import PostDetailMarkdown from "@/app/posts/post-detail-markdown";
 import PostEditorView from "@/app/posts/post-editor-view";
+import { apiPostRepository } from "../api-post-repository";
 import "../post-detail-view.css";
 import "../post-editor-view.css";
 
@@ -74,7 +74,7 @@ export default async function PostDetailPage({
 
     const [categories, post] = await Promise.all([
       apiPostCategoryRepository.getCategories(),
-      dummyPostRepository.getPostById(postId),
+      apiPostRepository.getPostById(postId),
     ]);
 
     if (!post) {
@@ -90,7 +90,7 @@ export default async function PostDetailPage({
     );
   }
 
-  const post = await dummyPostRepository.getPostById(postId);
+  const post = await apiPostRepository.getPostById(postId);
 
   if (!post) {
     notFound();

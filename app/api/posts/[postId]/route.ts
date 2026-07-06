@@ -1,10 +1,4 @@
-import { NextResponse } from "next/server";
-import {
-  createPostDetailApiResponse,
-  deletePostApiResponse,
-  type SavePostRequestDto,
-  updatePostApiResponse,
-} from "@/app/posts/dummy-post-repositories";
+import { forwardPostApiRequest } from "../proxy";
 
 type RouteContext = {
   params: Promise<{
@@ -12,63 +6,30 @@ type RouteContext = {
   }>;
 };
 
-export async function GET(
-  _request: Request,
-  context: RouteContext,
-) {
+export async function GET(request: Request, context: RouteContext) {
   const { postId } = await context.params;
-  const response = await createPostDetailApiResponse(postId);
 
-  if (!response) {
-    return NextResponse.json(
-      {
-        status: 404,
-        payload: null,
-        message: "post not found",
-        code: "POST_NOT_FOUND",
-      },
-      { status: 404 },
-    );
-  }
-
-  return NextResponse.json(response);
+  return forwardPostApiRequest(request, `/api/v1/posts/${postId}`, {
+    method: "GET",
+  });
 }
 
 export async function PUT(request: Request, context: RouteContext) {
   const { postId } = await context.params;
-  const requestBody = (await request.json()) as SavePostRequestDto;
-  const response = await updatePostApiResponse(postId, requestBody);
 
-  if (!response) {
-    return NextResponse.json(
-      {
-        status: 404,
-        payload: null,
-        message: "post not found",
-        code: "POST_NOT_FOUND",
-      },
-      { status: 404 },
-    );
-  }
-
-  return NextResponse.json(response, { status: 200 });
+  return forwardPostApiRequest(request, `/api/v1/posts/${postId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": request.headers.get("content-type") ?? "application/json",
+    },
+    body: await request.text(),
+  });
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   const { postId } = await context.params;
-  const response = await deletePostApiResponse(postId);
 
-  if (!response) {
-    return NextResponse.json(
-      {
-        status: 404,
-        payload: null,
-        message: "post not found",
-        code: "POST_NOT_FOUND",
-      },
-      { status: 404 },
-    );
-  }
-
-  return NextResponse.json(response, { status: response.status });
+  return forwardPostApiRequest(request, `/api/v1/posts/${postId}`, {
+    method: "DELETE",
+  });
 }

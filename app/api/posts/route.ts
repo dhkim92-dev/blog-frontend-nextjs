@@ -1,26 +1,36 @@
-import { NextResponse } from "next/server";
-import {
-  createPostApiResponse,
-  createPostListApiResponse,
-  type SavePostRequestDto,
-} from "@/app/posts/dummy-post-repositories";
+import { forwardPostApiRequest } from "./proxy";
 
-type RouteContext = {
-  request: Request;
-};
-
-export async function GET(request: RouteContext["request"]) {
+export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
+  const upstreamSearch = new URLSearchParams();
   const categoryId = searchParams.get("categoryId");
   const cursor = searchParams.get("cursor");
-  const response = await createPostListApiResponse(categoryId, cursor);
 
-  return NextResponse.json(response);
+  if (categoryId) {
+    upstreamSearch.set("categoryId", categoryId);
+  }
+
+  if (cursor) {
+    upstreamSearch.set("cursor", cursor);
+  }
+
+  const query = upstreamSearch.toString();
+
+  return forwardPostApiRequest(
+    request,
+    `/api/v1/posts${query ? `?${query}` : ""}`,
+    {
+      method: "GET",
+    },
+  );
 }
 
-export async function POST(request: RouteContext["request"]) {
-  const requestBody = (await request.json()) as SavePostRequestDto;
-  const response = await createPostApiResponse(requestBody);
-
-  return NextResponse.json(response, { status: 201 });
+export async function POST(request: Request) {
+  return forwardPostApiRequest(request, "/api/v1/posts", {
+    method: "POST",
+    headers: {
+      "Content-Type": request.headers.get("content-type") ?? "application/json",
+    },
+    body: await request.text(),
+  });
 }

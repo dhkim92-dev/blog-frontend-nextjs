@@ -23,7 +23,7 @@ export default function PostDetailActions({
     const command = startCommand();
     const result = await browserDummyPostRepository.deletePost(postId);
 
-    if (result.status !== 200) {
+    if (result.status !== 200 && result.status !== 204) {
       await command.dismiss();
       window.alert(result.message || "게시물 삭제에 실패했습니다.");
       return;

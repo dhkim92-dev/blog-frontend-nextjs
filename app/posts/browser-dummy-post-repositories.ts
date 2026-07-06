@@ -61,7 +61,12 @@ export type SavePostCategoryRequestDto = {
 type CollectionPayload<TItem> = {
   count: number;
   items: TItem[];
-  _links: Record<string, string> | null;
+  _links?: Record<string, string> | null;
+  _link?:
+    | {
+        href: string;
+      }
+    | null;
 };
 
 type PostApiItem = PostListItemDto & {
@@ -88,6 +93,8 @@ function extractCursor(nextUrl: string | null) {
 function mapPostListApiResponseToDto(
   response: ApiEnvelope<CollectionPayload<PostApiItem>>,
 ): PostCursorPageDto {
+  const lastItem = response.payload.items[response.payload.items.length - 1];
+
   return {
     count: response.payload.count,
     items: response.payload.items.map((item) => ({
@@ -103,12 +110,9 @@ function mapPostListApiResponseToDto(
       likeCount: item.likeCount,
       commentCount: item.commentCount,
     })),
-    nextCursor:
-      response.payload.items.length > 0
-        ? extractCursor(
-            response.payload.items[response.payload.items.length - 1]._links.next,
-          )
-        : null,
+    nextCursor: extractCursor(
+      response.payload._link?.href ?? lastItem?._links?.next ?? null,
+    ),
   };
 }
 

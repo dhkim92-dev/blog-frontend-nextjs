@@ -6,8 +6,8 @@ import {
 import AdminPageGuard from "@/app/shared/admin-page-guard";
 import { apiPostCategoryRepository } from "./api-post-category-repository";
 import {
-  dummyPostRepository,
-} from "./dummy-post-repositories";
+  apiPostRepository,
+} from "./api-post-repository";
 import PostEditorView from "./post-editor-view";
 import PostsView from "./posts-view";
 import "./posts-view.css";
@@ -42,7 +42,7 @@ export default async function PostsPage({ searchParams }: PostsPageProps) {
 
   const [categories, postsPage] = await Promise.all([
     apiPostCategoryRepository.getCategories(),
-    dummyPostRepository.getPosts({ categoryId: selectedCategoryId }),
+    apiPostRepository.getPosts({ categoryId: selectedCategoryId }),
   ]);
   const selectedCategoryName =
     categories.items.find((category) => category.id === selectedCategoryId)
