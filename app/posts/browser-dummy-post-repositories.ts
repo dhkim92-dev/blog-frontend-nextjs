@@ -4,6 +4,7 @@ import {
   parseApiEnvelope,
   type ApiEnvelope,
 } from "@/app/shared/api-envelope";
+import { browserAuthFetch } from "@/app/shared/browser-auth-fetch";
 
 export type PostCategoryDto = {
   id: string;
@@ -129,7 +130,7 @@ export class BrowserDummyPostRepository {
     }
 
     const query = searchParams.toString();
-    const response = await fetch(`/api/posts${query ? `?${query}` : ""}`, {
+    const response = await browserAuthFetch(`/api/posts${query ? `?${query}` : ""}`, {
       method: "GET",
       cache: "no-store",
     });
@@ -144,7 +145,7 @@ export class BrowserDummyPostRepository {
   }
 
   async createPost(requestBody: SavePostRequestDto): Promise<number> {
-    const response = await fetch("/api/posts", {
+    const response = await browserAuthFetch("/api/posts", {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -160,7 +161,7 @@ export class BrowserDummyPostRepository {
     postId: string,
     requestBody: SavePostRequestDto,
   ): Promise<number> {
-    const response = await fetch(`/api/posts/${postId}`, {
+    const response = await browserAuthFetch(`/api/posts/${postId}`, {
       method: "PUT",
       cache: "no-store",
       headers: {
@@ -173,7 +174,7 @@ export class BrowserDummyPostRepository {
   }
 
   async deletePost(postId: string): Promise<ApiResult> {
-    const response = await fetch(`/api/posts/${postId}`, {
+    const response = await browserAuthFetch(`/api/posts/${postId}`, {
       method: "DELETE",
       cache: "no-store",
     });
@@ -188,7 +189,7 @@ export class BrowserDummyPostRepository {
 
 export class BrowserDummyPostCategoryRepository {
   async getCategories(): Promise<PostCategoryDto[]> {
-    const response = await fetch("/api/post-categories", {
+    const response = await browserAuthFetch("/api/post-categories", {
       method: "GET",
       cache: "no-store",
     });
@@ -206,7 +207,7 @@ export class BrowserDummyPostCategoryRepository {
   async createCategory(
     requestBody: SavePostCategoryRequestDto,
   ): Promise<ApiResult> {
-    const response = await fetch("/api/post-categories", {
+    const response = await browserAuthFetch("/api/post-categories", {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -226,7 +227,7 @@ export class BrowserDummyPostCategoryRepository {
     categoryId: string,
     requestBody: SavePostCategoryRequestDto,
   ): Promise<ApiResult> {
-    const response = await fetch(`/api/post-categories/${categoryId}`, {
+    const response = await browserAuthFetch(`/api/post-categories/${categoryId}`, {
       method: "PUT",
       cache: "no-store",
       headers: {
@@ -243,7 +244,7 @@ export class BrowserDummyPostCategoryRepository {
   }
 
   async deleteCategory(categoryId: string): Promise<ApiResult> {
-    const response = await fetch(`/api/post-categories/${categoryId}`, {
+    const response = await browserAuthFetch(`/api/post-categories/${categoryId}`, {
       method: "DELETE",
       cache: "no-store",
     });

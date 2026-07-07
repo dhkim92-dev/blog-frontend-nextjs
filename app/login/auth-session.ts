@@ -3,6 +3,7 @@ import { accessTokenSessionStore } from "@/app/login/access-token-session-store"
 export type AuthenticationTokenPayload = {
   sub: string;
   memberId?: string | null;
+  authAccountId?: string | null;
   nickname?: string | null;
   roles: string[];
 };
@@ -10,6 +11,7 @@ export type AuthenticationTokenPayload = {
 export type AuthenticationJwtClaims = Record<string, unknown> & {
   sub: string;
   memberId?: string | null;
+  authAccountId?: string | null;
   nickname?: string | null;
   roles?: string[];
 };
@@ -111,6 +113,11 @@ export function decodeAuthenticationJwtClaims(
         typeof parsedPayload.memberId === "string" || parsedPayload.memberId === null
           ? parsedPayload.memberId
           : null,
+      authAccountId:
+        typeof parsedPayload.authAccountId === "string" ||
+        parsedPayload.authAccountId === null
+          ? parsedPayload.authAccountId
+          : null,
       nickname:
         typeof parsedPayload.nickname === "string" || parsedPayload.nickname === null
           ? parsedPayload.nickname
@@ -138,6 +145,7 @@ export function decodeAuthenticationToken(
   return {
     sub: claims.sub,
     memberId: claims.memberId ?? null,
+    authAccountId: claims.authAccountId ?? null,
     nickname: claims.nickname ?? null,
     roles: claims.roles,
   };
@@ -165,6 +173,7 @@ export function parseAuthenticatedMemberCookie(
     return {
       sub: parsedPayload.sub,
       memberId: parsedPayload.memberId ?? null,
+      authAccountId: parsedPayload.authAccountId ?? null,
       nickname: parsedPayload.nickname ?? null,
       roles: parsedPayload.roles.filter(
         (role): role is string => typeof role === "string",
@@ -173,6 +182,42 @@ export function parseAuthenticatedMemberCookie(
   } catch {
     return null;
   }
+}
+
+function writeAuthenticatedMemberCookie(
+  cookies: CookieWriter,
+  payload: AuthenticationTokenPayload,
+) {
+  cookies.set(
+    "authenticated-member",
+    encodeURIComponent(JSON.stringify(payload)),
+    getAuthenticationCookieOptions(),
+  );
+}
+
+export function setAuthenticatedMemberCookie(
+  cookies: CookieWriter,
+  payload: AuthenticationTokenPayload,
+) {
+  writeAuthenticatedMemberCookie(cookies, payload);
+}
+
+export function getAuthenticatedMemberFromCookieHeader(
+  cookieHeader: string | null,
+) {
+  if (!cookieHeader) {
+    return null;
+  }
+
+  const authenticatedMemberMatch = cookieHeader.match(
+    /(?:^|;\s*)authenticated-member=([^;]+)/,
+  );
+
+  if (!authenticatedMemberMatch) {
+    return null;
+  }
+
+  return parseAuthenticatedMemberCookie(authenticatedMemberMatch[1]);
 }
 
 function getAuthenticationCookieOptions() {
@@ -203,11 +248,7 @@ export async function setAuthenticationCookies(
   cookies.set(ACCESS_TOKEN_SESSION_COOKIE_NAME, sessionId, cookieOptions);
 
   if (authenticationPayload) {
-    cookies.set(
-      "authenticated-member",
-      encodeURIComponent(JSON.stringify(authenticationPayload)),
-      cookieOptions,
-    );
+    writeAuthenticatedMemberCookie(cookies, authenticationPayload);
   }
 }
 

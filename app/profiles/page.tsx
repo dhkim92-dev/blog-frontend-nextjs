@@ -1,12 +1,48 @@
-export default function ProfilesPage() {
+import { redirect } from "next/navigation";
+import {
+  getCurrentServerAuthentication,
+  getServerAuthenticationDisplayName,
+} from "@/app/login/server-auth";
+import {
+  apiMemberRepository,
+  MemberAuthenticationExpiredError,
+} from "./api-member-repository";
+import ProfilePageView from "./profile-page-view";
+
+export default async function ProfilesPage() {
+  const authentication = await getCurrentServerAuthentication();
+
+  if (!authentication.isAuthenticated) {
+    redirect("/login");
+  }
+
+  const memberId = authentication.claims.memberId ?? null;
+  const authAccountId = authentication.claims.sub;
+  let memberProfile = null;
+  let authAccount = null;
+
+  try {
+    [memberProfile, authAccount] = await Promise.all([
+      memberId ? apiMemberRepository.getMemberById(memberId) : Promise.resolve(null),
+      authAccountId
+        ? apiMemberRepository.getAuthAccountById(authAccountId)
+        : Promise.resolve(null),
+    ]);
+  } catch (error) {
+    if (error instanceof MemberAuthenticationExpiredError) {
+      redirect("/login");
+    }
+
+    throw error;
+  }
+
   return (
-    <section className="flex flex-1 items-center justify-center px-6 py-16">
-      <div className="text-center">
-        <h1 className="text-[35px] font-semibold text-white">Profile</h1>
-        <p className="mt-3 text-[19px] text-zinc-400">
-          Profile page placeholder.
-        </p>
-      </div>
-    </section>
+    <ProfilePageView
+      displayName={getServerAuthenticationDisplayName(authentication)}
+      memberId={memberId}
+      roles={authentication.claims.roles ?? []}
+      initialMemberProfile={memberProfile}
+      authAccount={authAccount}
+    />
   );
 }

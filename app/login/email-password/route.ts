@@ -10,32 +10,12 @@ import {
   createSessionExpiredResponse,
   fetchApiServer,
 } from "@/app/login/api-server-fetch";
+import { parseApiEnvelope } from "@/app/shared/api-envelope";
 
 type EmailPasswordLoginRequest = {
   email: string;
   password: string;
 };
-
-type EmailPasswordLoginResponse = {
-  status: number;
-  payload: LoginTokenPayload | null;
-  code: string;
-  message?: string | null;
-};
-
-async function parseJsonResponse<T>(response: Response) {
-  const responseText = await response.text();
-
-  if (!responseText) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(responseText) as T;
-  } catch {
-    return null;
-  }
-}
 
 export async function POST(request: Request) {
   const requestBody = (await request.json()) as EmailPasswordLoginRequest;
@@ -99,8 +79,9 @@ export async function POST(request: Request) {
     return response;
   }
 
-  const responseBody =
-    await parseJsonResponse<EmailPasswordLoginResponse>(apiResponse);
+  const responseBody = await parseApiEnvelope<LoginTokenPayload | null>(
+    apiResponse,
+  );
 
   console.info("[auth/email-password] upstream response received", {
     apiBaseUrl,

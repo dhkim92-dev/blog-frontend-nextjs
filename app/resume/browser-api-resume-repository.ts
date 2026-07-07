@@ -1,4 +1,5 @@
 import { getApiMessage, parseApiEnvelope } from "@/app/shared/api-envelope";
+import { browserAuthFetch } from "@/app/shared/browser-auth-fetch";
 import type { SaveResumeRequestDto } from "./resume-types";
 
 type ApiResult = {
@@ -8,7 +9,7 @@ type ApiResult = {
 
 export class BrowserApiResumeRepository {
   async createResume(requestBody: SaveResumeRequestDto): Promise<ApiResult> {
-    const response = await fetch("/api/resume", {
+    const response = await browserAuthFetch("/api/resume", {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -25,7 +26,7 @@ export class BrowserApiResumeRepository {
   }
 
   async updateResume(requestBody: SaveResumeRequestDto): Promise<ApiResult> {
-    const response = await fetch("/api/resume", {
+    const response = await browserAuthFetch("/api/resume", {
       method: "PUT",
       cache: "no-store",
       headers: {
@@ -42,7 +43,7 @@ export class BrowserApiResumeRepository {
   }
 
   async deleteResume(): Promise<ApiResult> {
-    const response = await fetch("/api/resume", {
+    const response = await browserAuthFetch("/api/resume", {
       method: "DELETE",
       cache: "no-store",
     });

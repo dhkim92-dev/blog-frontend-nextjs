@@ -5,9 +5,7 @@ export type ApiEnvelope<TPayload> = {
   payload: TPayload;
 };
 
-export async function parseApiEnvelope<TPayload>(response: Response) {
-  const responseText = await response.text();
-
+export function parseApiEnvelopeText<TPayload>(responseText: string) {
   if (!responseText) {
     return null;
   }
@@ -17,6 +15,10 @@ export async function parseApiEnvelope<TPayload>(response: Response) {
   } catch {
     return null;
   }
+}
+
+export async function parseApiEnvelope<TPayload>(response: Response) {
+  return parseApiEnvelopeText<TPayload>(await response.text());
 }
 
 export function getApiPayload<TPayload>(

@@ -1,10 +1,6 @@
 import "server-only";
-import { cookies } from "next/headers";
-import { accessTokenSessionStore } from "@/app/login/access-token-session-store";
-import {
-  getAccessTokenSessionIdFromCookieHeader,
-  getApiBaseUrl,
-} from "@/app/login/auth-session";
+import { getApiBaseUrl } from "@/app/login/auth-session";
+import { fetchCurrentServerApi } from "@/app/login/current-server-api-fetch";
 import { getApiPayload, parseApiEnvelope } from "@/app/shared/api-envelope";
 import type {
   PostCursorPageDto,
@@ -58,16 +54,10 @@ function isNotFoundPostDetailResponse(params: {
   );
 }
 
-function createRequestHeaders(accessToken: string | null) {
-  const headers = new Headers({
+function createRequestHeaders() {
+  return new Headers({
     Accept: "application/json",
   });
-
-  if (accessToken) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
-  }
-
-  return headers;
 }
 
 function extractCursor(nextUrl: string | null) {
@@ -107,11 +97,6 @@ function mapPostListPayloadToDto(payload: PostListPayload): PostCursorPageDto {
 
 export class ApiPostRepository {
   async getPosts(params: PostQueryParams): Promise<PostCursorPageDto> {
-    const cookieHeader = (await cookies()).toString();
-    const sessionId = getAccessTokenSessionIdFromCookieHeader(cookieHeader);
-    const accessToken = sessionId
-      ? (await accessTokenSessionStore.get(sessionId))?.accessToken ?? null
-      : null;
     const url = new URL("/api/v1/posts", getApiBaseUrl());
 
     if (params.categoryId) {
@@ -122,11 +107,12 @@ export class ApiPostRepository {
       url.searchParams.set("cursor", params.cursor);
     }
 
-    const response = await fetch(url, {
+    const result = await fetchCurrentServerApi(url, {
       method: "GET",
       cache: "no-store",
-      headers: createRequestHeaders(accessToken),
+      headers: createRequestHeaders(),
     });
+    const response = result.upstreamResponse;
     const responseBody = await parseApiEnvelope<PostListPayload>(response);
     const payload = getApiPayload(responseBody);
 
@@ -138,19 +124,15 @@ export class ApiPostRepository {
   }
 
   async getPostById(postId: string): Promise<PostDetailDto | null> {
-    const cookieHeader = (await cookies()).toString();
-    const sessionId = getAccessTokenSessionIdFromCookieHeader(cookieHeader);
-    const accessToken = sessionId
-      ? (await accessTokenSessionStore.get(sessionId))?.accessToken ?? null
-      : null;
-    const response = await fetch(
+    const result = await fetchCurrentServerApi(
       new URL(`/api/v1/posts/${postId}`, getApiBaseUrl()),
       {
         method: "GET",
         cache: "no-store",
-        headers: createRequestHeaders(accessToken),
+        headers: createRequestHeaders(),
       },
     );
+    const response = result.upstreamResponse;
     const contentType = response.headers.get("content-type");
     const responseBody = await parseApiEnvelope<PostDetailPayload>(response);
     const payload = getApiPayload(responseBody);

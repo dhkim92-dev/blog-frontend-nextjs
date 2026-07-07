@@ -8,6 +8,7 @@ import {
   type LoginTokenPayload,
 } from "@/app/login/auth-session";
 import { accessTokenSessionStore } from "@/app/login/access-token-session-store";
+import { parseApiEnvelope } from "@/app/shared/api-envelope";
 
 export type ApiServerFetchResult = {
   upstreamResponse: Response;
@@ -60,20 +61,6 @@ function hasRefreshTokenRemoval(setCookieHeaders: string[]) {
   );
 }
 
-async function parseJsonResponse<T>(response: Response) {
-  const responseText = await response.text();
-
-  if (!responseText) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(responseText) as T;
-  } catch {
-    return null;
-  }
-}
-
 function createAuthHeaders(
   initHeaders: HeadersInit | undefined,
   accessToken: string | null,
@@ -120,9 +107,8 @@ export async function requestAccessTokenReissue(refreshToken: string) {
     }),
     cache: "no-store",
   });
-  const responseBody = await parseJsonResponse<TokenResponse | ErrorResponse>(
-    reissueResponse,
-  );
+  const responseBody =
+    await parseApiEnvelope<TokenResponse["payload"]>(reissueResponse);
   const refreshTokenRemoved = hasRefreshTokenRemoval(
     reissueResponse.headers.getSetCookie(),
   );
@@ -164,7 +150,14 @@ export async function fetchApiServer(
   input: URL | string,
   init: RequestInit,
 ): Promise<ApiServerFetchResult> {
-  const cookieHeader = request.headers.get("cookie");
+  return fetchApiServerWithCookieHeader(request.headers.get("cookie"), input, init);
+}
+
+export async function fetchApiServerWithCookieHeader(
+  cookieHeader: string | null,
+  input: URL | string,
+  init: RequestInit,
+): Promise<ApiServerFetchResult> {
   const sessionId = getAccessTokenSessionIdFromCookieHeader(cookieHeader);
   const accessTokenSession = sessionId
     ? await accessTokenSessionStore.get(sessionId)
@@ -200,9 +193,23 @@ export async function fetchApiServer(
     };
   }
 
+  console.warn("[auth/reissue] upstream request requires token reissue", {
+    url: typeof input === "string" ? input : input.toString(),
+    status: upstreamResponse.status,
+    sessionId,
+    hasRefreshToken: Boolean(refreshToken),
+  });
+
   const reissueResult = await requestAccessTokenReissue(refreshToken);
 
   if (!reissueResult.refreshedTokens || reissueResult.refreshTokenRemoved) {
+    console.warn("[auth/reissue] token reissue did not recover session", {
+      url: typeof input === "string" ? input : input.toString(),
+      sessionId,
+      refreshTokenRemoved: reissueResult.refreshTokenRemoved,
+      hasRefreshedTokens: Boolean(reissueResult.refreshedTokens),
+    });
+
     return {
       upstreamResponse,
       refreshTokenRemoved: reissueResult.refreshTokenRemoved,

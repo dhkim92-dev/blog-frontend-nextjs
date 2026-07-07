@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getCurrentServerAuthentication } from "@/app/login/server-auth";
+import {
+  getCurrentServerAuthentication,
+  getServerAuthenticationDisplayName,
+} from "@/app/login/server-auth";
 import { CommandLoadingProvider } from "@/app/shared/command-loading-provider";
 import "./globals.css";
 
@@ -25,11 +28,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const authentication = await getCurrentServerAuthentication();
-  const memberDisplayName =
-    (authentication.isAuthenticated &&
-      typeof authentication.claims.nickname === "string" &&
-      authentication.claims.nickname.trim()) ||
-    "Login";
+  const memberDisplayName = getServerAuthenticationDisplayName(authentication);
+  const memberHref = authentication.isAuthenticated ? "/profiles" : "/login";
 
   return (
     <html lang="en" className="h-full antialiased">
@@ -79,7 +79,7 @@ export default async function RootLayout({
                 </div>
                 <div className="w-full text-center md:w-auto md:text-right">
                   <Link
-                    href="/login"
+                    href={memberHref}
                     className="cursor-pointer text-[21px] text-white transition-colors hover:text-zinc-300"
                   >
                     {memberDisplayName}

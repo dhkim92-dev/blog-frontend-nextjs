@@ -6,7 +6,7 @@ import {
   fetchApiServer,
   type ApiServerFetchResult,
 } from "@/app/login/api-server-fetch";
-import { getApiPayload } from "@/app/shared/api-envelope";
+import { getApiPayload, parseApiEnvelopeText } from "@/app/shared/api-envelope";
 import type { SaveResumeRequestDto } from "@/app/resume/resume-types";
 
 type ResumePayload = {
@@ -101,23 +101,6 @@ function isResumeNotFoundResponse(params: {
   );
 }
 
-function parseResumeEnvelope(responseText: string) {
-  if (!responseText) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(responseText) as {
-      status: number;
-      code: string;
-      message?: string | null;
-      payload: ResumePayload | null;
-    };
-  } catch {
-    return null;
-  }
-}
-
 async function forwardResumeApiRequest(
   request: Request,
   pathname: string,
@@ -167,7 +150,7 @@ async function resolveLatestResumeId(request: Request) {
   }
 
   const responseText = await result.upstreamResponse.text();
-  const responseBody = parseResumeEnvelope(responseText);
+  const responseBody = parseApiEnvelopeText<ResumePayload | null>(responseText);
   const payload = getApiPayload(responseBody);
 
   if (!result.upstreamResponse.ok || !payload?.id) {
@@ -242,7 +225,7 @@ export async function GET(request: Request) {
   }
 
   const responseText = await result.upstreamResponse.text();
-  const responseBody = parseResumeEnvelope(responseText);
+  const responseBody = parseApiEnvelopeText<ResumePayload | null>(responseText);
 
   if (
     isResumeNotFoundResponse({

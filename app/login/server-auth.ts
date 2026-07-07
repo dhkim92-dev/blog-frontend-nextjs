@@ -30,6 +30,7 @@ function toAuthenticationClaims(
   return {
     sub: payload.sub,
     memberId: payload.memberId ?? null,
+    authAccountId: payload.authAccountId ?? null,
     nickname: payload.nickname ?? null,
     roles: payload.roles,
   };
@@ -45,15 +46,15 @@ export async function getCurrentServerAuthentication(): Promise<ServerAuthentica
     cookieStore.toString(),
   );
 
-  if (!accessTokenSessionId) {
-    if (authenticatedMemberClaims) {
-      return {
-        isAuthenticated: true,
-        accessTokenSessionId: null,
-        claims: authenticatedMemberClaims,
-      };
-    }
+  if (authenticatedMemberClaims) {
+    return {
+      isAuthenticated: true,
+      accessTokenSessionId,
+      claims: authenticatedMemberClaims,
+    };
+  }
 
+  if (!accessTokenSessionId) {
     return {
       isAuthenticated: false,
       accessTokenSessionId: null,
@@ -64,14 +65,6 @@ export async function getCurrentServerAuthentication(): Promise<ServerAuthentica
   const session = await accessTokenSessionStore.get(accessTokenSessionId);
 
   if (!session) {
-    if (authenticatedMemberClaims) {
-      return {
-        isAuthenticated: true,
-        accessTokenSessionId: null,
-        claims: authenticatedMemberClaims,
-      };
-    }
-
     return {
       isAuthenticated: false,
       accessTokenSessionId: null,
@@ -82,14 +75,6 @@ export async function getCurrentServerAuthentication(): Promise<ServerAuthentica
   const claims = decodeAuthenticationJwtClaims(session.accessToken);
 
   if (!claims) {
-    if (authenticatedMemberClaims) {
-      return {
-        isAuthenticated: true,
-        accessTokenSessionId: null,
-        claims: authenticatedMemberClaims,
-      };
-    }
-
     return {
       isAuthenticated: false,
       accessTokenSessionId: null,
@@ -111,4 +96,27 @@ export function isAdminServerAuthentication(
     authentication.isAuthenticated &&
     authentication.claims.roles?.includes("ROLE_ADMIN") === true
   );
+}
+
+export function isGuestServerAuthentication(
+  authentication: ServerAuthentication,
+) {
+  return (
+    authentication.isAuthenticated &&
+    authentication.claims.roles?.includes("ROLE_GUEST") === true
+  );
+}
+
+export function getServerAuthenticationDisplayName(
+  authentication: ServerAuthentication,
+) {
+  if (!authentication.isAuthenticated) {
+    return "Login";
+  }
+
+  if (isGuestServerAuthentication(authentication)) {
+    return "GUEST";
+  }
+
+  return authentication.claims.nickname?.trim() || "Member";
 }

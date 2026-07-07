@@ -1,10 +1,6 @@
 import "server-only";
-import { cookies } from "next/headers";
-import { accessTokenSessionStore } from "@/app/login/access-token-session-store";
-import {
-  getAccessTokenSessionIdFromCookieHeader,
-  getApiBaseUrl,
-} from "@/app/login/auth-session";
+import { getApiBaseUrl } from "@/app/login/auth-session";
+import { fetchCurrentServerApi } from "@/app/login/current-server-api-fetch";
 import { getApiPayload, parseApiEnvelope } from "@/app/shared/api-envelope";
 import type {
   PostCategoryCollectionDto,
@@ -19,33 +15,23 @@ type PostCategoryListPayload = {
   } | null;
 };
 
-function createRequestHeaders(accessToken: string | null) {
-  const headers = new Headers({
+function createRequestHeaders() {
+  return new Headers({
     Accept: "application/json",
   });
-
-  if (accessToken) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
-  }
-
-  return headers;
 }
 
 export class ApiPostCategoryRepository {
   async getCategories(): Promise<PostCategoryCollectionDto> {
-    const cookieHeader = (await cookies()).toString();
-    const sessionId = getAccessTokenSessionIdFromCookieHeader(cookieHeader);
-    const accessToken = sessionId
-      ? (await accessTokenSessionStore.get(sessionId))?.accessToken ?? null
-      : null;
-    const response = await fetch(
+    const result = await fetchCurrentServerApi(
       new URL("/api/v1/post-categories", getApiBaseUrl()),
       {
         method: "GET",
         cache: "no-store",
-        headers: createRequestHeaders(accessToken),
+        headers: createRequestHeaders(),
       },
     );
+    const response = result.upstreamResponse;
     const responseBody =
       await parseApiEnvelope<PostCategoryListPayload>(response);
     const payload = getApiPayload(responseBody);
