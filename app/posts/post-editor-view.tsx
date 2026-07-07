@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCommandLoading } from "@/app/shared/command-loading-provider";
+import ErrorToast, { type ErrorToastState } from "@/app/shared/error-toast";
 import MarkdownEditorView from "@/app/shared/markdown-editor-view";
 import {
   browserDummyPostRepository,
@@ -29,6 +30,14 @@ export default function PostEditorView({
   const [title, setTitle] = useState(initialPost?.title ?? "");
   const [content, setContent] = useState(initialPost?.content ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorToast, setErrorToast] = useState<ErrorToastState | null>(null);
+
+  function showErrorToast(message: string) {
+    setErrorToast({
+      id: Date.now(),
+      message,
+    });
+  }
 
   async function handleSubmit() {
     if (isSubmitting) {
@@ -39,11 +48,12 @@ export default function PostEditorView({
     const hasContent = content.trim().length > 0;
 
     if (!normalizedTitle || !selectedCategoryId || !hasContent) {
-      window.alert("카테고리, 제목, 본문을 모두 입력해주세요.");
+      showErrorToast("카테고리, 제목, 본문을 모두 입력해주세요.");
       return;
     }
 
     setIsSubmitting(true);
+    setErrorToast(null);
     const command = startCommand();
     let shouldDismissCommand = true;
 
@@ -64,7 +74,7 @@ export default function PostEditorView({
           : await browserDummyPostRepository.createPost(requestBody);
 
       if (responseStatus !== 200 && responseStatus !== 201) {
-        window.alert("게시물 저장에 실패했습니다.");
+        showErrorToast("게시물 저장에 실패했습니다.");
         return;
       }
 
@@ -133,6 +143,13 @@ export default function PostEditorView({
             </button>
           </>
         }
+      />
+
+      <ErrorToast
+        toast={errorToast}
+        onClear={(toastId) => {
+          setErrorToast((current) => (current?.id === toastId ? null : current));
+        }}
       />
     </section>
   );

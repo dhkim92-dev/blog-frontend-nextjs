@@ -6,7 +6,7 @@ import {
   isAdminServerAuthentication,
 } from "@/app/login/server-auth";
 import AdminPageGuard from "@/app/shared/admin-page-guard";
-import { dummyResumeRepository } from "./dummy-resume-repositories";
+import { apiResumeRepository } from "./api-resume-repository";
 import ResumeActions from "./resume-actions";
 import ResumeEditorView from "./resume-editor-view";
 import "./resume-view.css";
@@ -34,7 +34,7 @@ export default async function ResumePage({ searchParams }: ResumePageProps) {
   const mode = resolvedSearchParams?.mode ?? null;
   const authentication = await getCurrentServerAuthentication();
   const isAdmin = isAdminServerAuthentication(authentication);
-  const resume = await dummyResumeRepository.getResume();
+  const resume = await apiResumeRepository.getResume();
 
   if (mode === "edit") {
     if (!isAdmin) {

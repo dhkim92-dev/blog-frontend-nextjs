@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCommandLoading } from "@/app/shared/command-loading-provider";
+import ErrorToast, { type ErrorToastState } from "@/app/shared/error-toast";
 import {
   browserDummyPostCategoryRepository,
   type PostCategoryDto,
@@ -18,13 +19,20 @@ export default function PostCategoryEditorView({
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<ErrorToastState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function showErrorToast(message: string) {
+    setErrorToast({
+      id: Date.now(),
+      message,
+    });
+  }
 
   function startEditing(category: PostCategoryDto) {
     setEditingCategoryId(category.id);
     setEditingName(category.name);
-    setErrorMessage(null);
+    setErrorToast(null);
   }
 
   function cancelEditing() {
@@ -40,12 +48,12 @@ export default function PostCategoryEditorView({
     const normalizedName = newCategoryName.trim();
 
     if (!normalizedName || normalizedName.length > 20) {
-      setErrorMessage("카테고리 이름은 1자 이상 20자 이하여야 합니다.");
+      showErrorToast("카테고리 이름은 1자 이상 20자 이하여야 합니다.");
       return;
     }
 
     setIsSubmitting(true);
-    setErrorMessage(null);
+    setErrorToast(null);
     const command = startCommand();
     let shouldDismissCommand = true;
 
@@ -55,7 +63,7 @@ export default function PostCategoryEditorView({
       });
 
       if (result.status !== 201) {
-        setErrorMessage(result.message);
+        showErrorToast(result.message);
         return;
       }
 
@@ -79,12 +87,12 @@ export default function PostCategoryEditorView({
     const normalizedName = editingName.trim();
 
     if (!normalizedName || normalizedName.length > 20) {
-      setErrorMessage("카테고리 이름은 1자 이상 20자 이하여야 합니다.");
+      showErrorToast("카테고리 이름은 1자 이상 20자 이하여야 합니다.");
       return;
     }
 
     setIsSubmitting(true);
-    setErrorMessage(null);
+    setErrorToast(null);
     const command = startCommand();
     let shouldDismissCommand = true;
 
@@ -97,7 +105,7 @@ export default function PostCategoryEditorView({
       );
 
       if (result.status !== 200 && result.status !== 204) {
-        setErrorMessage(result.message);
+        showErrorToast(result.message);
         return;
       }
 
@@ -119,7 +127,7 @@ export default function PostCategoryEditorView({
     }
 
     setIsSubmitting(true);
-    setErrorMessage(null);
+    setErrorToast(null);
     const command = startCommand();
     let shouldDismissCommand = true;
 
@@ -128,7 +136,7 @@ export default function PostCategoryEditorView({
         await browserDummyPostCategoryRepository.deleteCategory(categoryId);
 
       if (result.status !== 204) {
-        setErrorMessage(result.message);
+        showErrorToast(result.message);
         return;
       }
 
@@ -251,11 +259,12 @@ export default function PostCategoryEditorView({
           </button>
         </div>
 
-        {errorMessage ? (
-          <div className="post-category-editor-feedback" role="alert">
-            {errorMessage}
-          </div>
-        ) : null}
+        <ErrorToast
+          toast={errorToast}
+          onClear={(toastId) => {
+            setErrorToast((current) => (current?.id === toastId ? null : current));
+          }}
+        />
       </div>
     </section>
   );

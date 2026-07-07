@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useCommandLoading } from "@/app/shared/command-loading-provider";
+import ErrorToast, { type ErrorToastState } from "@/app/shared/error-toast";
 import MarkdownEditorView from "@/app/shared/markdown-editor-view";
-import { browserDummyResumeRepository } from "./browser-dummy-resume-repositories";
+import { browserApiResumeRepository } from "./browser-api-resume-repository";
 import type { ResumeDetailDto, SaveResumeRequestDto } from "./resume-types";
 
 type ResumeEditorViewProps = {
@@ -16,7 +17,14 @@ export default function ResumeEditorView({
   const { startCommand } = useCommandLoading();
   const [content, setContent] = useState(initialResume?.content ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<ErrorToastState | null>(null);
+
+  function showErrorToast(message: string) {
+    setErrorToast({
+      id: Date.now(),
+      message,
+    });
+  }
 
   async function handleSubmit() {
     if (isSubmitting) {
@@ -24,12 +32,12 @@ export default function ResumeEditorView({
     }
 
     if (!content.trim()) {
-      setErrorMessage("이력서 본문을 입력해주세요.");
+      showErrorToast("이력서 본문을 입력해주세요.");
       return;
     }
 
     setIsSubmitting(true);
-    setErrorMessage(null);
+    setErrorToast(null);
     const command = startCommand();
     let shouldDismissCommand = true;
 
@@ -39,11 +47,15 @@ export default function ResumeEditorView({
 
     try {
       const result = initialResume
-        ? await browserDummyResumeRepository.updateResume(requestBody)
-        : await browserDummyResumeRepository.createResume(requestBody);
+        ? await browserApiResumeRepository.updateResume(requestBody)
+        : await browserApiResumeRepository.createResume(requestBody);
 
-      if (result.status !== 200 && result.status !== 201) {
-        setErrorMessage("이력서 저장에 실패했습니다.");
+      if (
+        result.status !== 200 &&
+        result.status !== 201 &&
+        result.status !== 204
+      ) {
+        showErrorToast("이력서 저장에 실패했습니다.");
         return;
       }
 
@@ -79,11 +91,12 @@ export default function ResumeEditorView({
         onCancel={handleCancel}
       />
 
-      {errorMessage ? (
-        <div className="post-editor-feedback" role="alert">
-          {errorMessage}
-        </div>
-      ) : null}
+      <ErrorToast
+        toast={errorToast}
+        onClear={(toastId) => {
+          setErrorToast((current) => (current?.id === toastId ? null : current));
+        }}
+      />
     </section>
   );
 }

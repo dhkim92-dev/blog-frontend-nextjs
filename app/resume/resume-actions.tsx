@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCommandLoading } from "@/app/shared/command-loading-provider";
-import { browserDummyResumeRepository } from "./browser-dummy-resume-repositories";
+import { browserApiResumeRepository } from "./browser-api-resume-repository";
 
 type ResumeActionsProps = {
   hasResume: boolean;
@@ -23,9 +23,9 @@ export default function ResumeActions({
     }
 
     const command = startCommand();
-    const result = await browserDummyResumeRepository.deleteResume();
+    const result = await browserApiResumeRepository.deleteResume();
 
-    if (result.status !== 200) {
+    if (result.status !== 200 && result.status !== 204) {
       await command.dismiss();
       window.alert(result.message || "이력서 삭제에 실패했습니다.");
       return;
