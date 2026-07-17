@@ -45,7 +45,7 @@ export default function NotFoundPage() {
             color: "#ffffff",
           }}
         >
-          요청한 페이지를 찾을 수 없습니다.
+          요청한 게시물을 찾을 수 없습니다.
         </h1>
         <p
           style={{
@@ -55,7 +55,7 @@ export default function NotFoundPage() {
             color: "#a1a1aa",
           }}
         >
-          주소가 잘못되었거나 페이지가 이동 또는 삭제되었을 수 있습니다.
+          이미 삭제되었거나 잘못된 주소로 접근한 것일 수 있습니다.
         </p>
         <div
           style={{
@@ -81,7 +81,7 @@ export default function NotFoundPage() {
               fontWeight: 700,
             }}
           >
-            콘텐츠 둘러보기
+            게시물 목록으로
           </Link>
           <Link
             href="/"

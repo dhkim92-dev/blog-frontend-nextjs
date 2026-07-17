@@ -8,13 +8,16 @@ type ApiResult = {
 
 export class BrowserApiResumeRepository {
   async createResume(requestBody: SaveResumeRequestDto): Promise<ApiResult> {
-    const response = await fetch("/api/resume", {
+    const response = await fetch("/api/v1/resumes", {
       method: "POST",
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        type: "MARKDOWN",
+        content: requestBody.content,
+      }),
     });
     const responseBody = await parseApiEnvelope<null>(response);
 
@@ -24,14 +27,20 @@ export class BrowserApiResumeRepository {
     };
   }
 
-  async updateResume(requestBody: SaveResumeRequestDto): Promise<ApiResult> {
-    const response = await fetch("/api/resume", {
+  async updateResume(
+    resumeId: string,
+    requestBody: SaveResumeRequestDto,
+  ): Promise<ApiResult> {
+    const response = await fetch(`/api/v1/resumes/${resumeId}`, {
       method: "PUT",
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify({
+        type: "MARKDOWN",
+        content: requestBody.content,
+      }),
     });
     const responseBody = await parseApiEnvelope<null>(response);
 
@@ -41,8 +50,8 @@ export class BrowserApiResumeRepository {
     };
   }
 
-  async deleteResume(): Promise<ApiResult> {
-    const response = await fetch("/api/resume", {
+  async deleteResume(resumeId: string): Promise<ApiResult> {
+    const response = await fetch(`/api/v1/resumes/${resumeId}`, {
       method: "DELETE",
       cache: "no-store",
     });

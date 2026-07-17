@@ -129,7 +129,7 @@ export class BrowserDummyPostRepository {
     }
 
     const query = searchParams.toString();
-    const response = await fetch(`/api/posts${query ? `?${query}` : ""}`, {
+    const response = await fetch(`/api/v1/posts${query ? `?${query}` : ""}`, {
       method: "GET",
       cache: "no-store",
     });
@@ -144,7 +144,7 @@ export class BrowserDummyPostRepository {
   }
 
   async createPost(requestBody: SavePostRequestDto): Promise<number> {
-    const response = await fetch("/api/posts", {
+    const response = await fetch("/api/v1/posts", {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -160,7 +160,7 @@ export class BrowserDummyPostRepository {
     postId: string,
     requestBody: SavePostRequestDto,
   ): Promise<number> {
-    const response = await fetch(`/api/posts/${postId}`, {
+    const response = await fetch(`/api/v1/posts/${postId}`, {
       method: "PUT",
       cache: "no-store",
       headers: {
@@ -173,7 +173,7 @@ export class BrowserDummyPostRepository {
   }
 
   async deletePost(postId: string): Promise<ApiResult> {
-    const response = await fetch(`/api/posts/${postId}`, {
+    const response = await fetch(`/api/v1/posts/${postId}`, {
       method: "DELETE",
       cache: "no-store",
     });
@@ -188,7 +188,7 @@ export class BrowserDummyPostRepository {
 
 export class BrowserDummyPostCategoryRepository {
   async getCategories(): Promise<PostCategoryDto[]> {
-    const response = await fetch("/api/post-categories", {
+    const response = await fetch("/api/v1/post-categories", {
       method: "GET",
       cache: "no-store",
     });
@@ -206,7 +206,7 @@ export class BrowserDummyPostCategoryRepository {
   async createCategory(
     requestBody: SavePostCategoryRequestDto,
   ): Promise<ApiResult> {
-    const response = await fetch("/api/post-categories", {
+    const response = await fetch("/api/v1/post-categories", {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -226,7 +226,7 @@ export class BrowserDummyPostCategoryRepository {
     categoryId: string,
     requestBody: SavePostCategoryRequestDto,
   ): Promise<ApiResult> {
-    const response = await fetch(`/api/post-categories/${categoryId}`, {
+    const response = await fetch(`/api/v1/post-categories/${categoryId}`, {
       method: "PUT",
       cache: "no-store",
       headers: {
@@ -243,7 +243,7 @@ export class BrowserDummyPostCategoryRepository {
   }
 
   async deleteCategory(categoryId: string): Promise<ApiResult> {
-    const response = await fetch(`/api/post-categories/${categoryId}`, {
+    const response = await fetch(`/api/v1/post-categories/${categoryId}`, {
       method: "DELETE",
       cache: "no-store",
     });
