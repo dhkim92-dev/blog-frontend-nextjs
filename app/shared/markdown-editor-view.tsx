@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
+import { getApiPayload, parseApiEnvelope } from "./api-envelope";
 
 type MarkdownEditorViewProps = {
   header?: ReactNode;
@@ -17,6 +18,19 @@ type MarkdownEditorViewProps = {
 
 const MIN_EDITOR_HEIGHT = 480;
 const MAX_EDITOR_HEIGHT = 720;
+const SUPPORTED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+]);
+
+type FileUploadPayload = {
+  fileId: string;
+  fileName: string;
+  fileSize: number;
+  url: string;
+};
+
 const MarkdownPreview = dynamic(() => import("./markdown-preview"), {
   ssr: false,
   loading: () => (
@@ -121,6 +135,12 @@ export default function MarkdownEditorView({
       return;
     }
 
+    if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
+      setErrorMessage("JPEG, PNG, GIF 이미지만 업로드할 수 있습니다.");
+      event.target.value = "";
+      return;
+    }
+
     setIsUploadingImage(true);
     setErrorMessage(null);
 
@@ -128,6 +148,7 @@ export default function MarkdownEditorView({
       const formData = new FormData();
 
       formData.append("file", file);
+      formData.append("usage", "POST_IMAGE");
 
       const response = await fetch("/api/v1/files", {
         method: "POST",
@@ -139,16 +160,15 @@ export default function MarkdownEditorView({
         return;
       }
 
-      const responseBody = (await response.json()) as {
-        url?: string;
-      };
+      const responseBody = await parseApiEnvelope<FileUploadPayload>(response);
+      const payload = getApiPayload(responseBody);
 
-      if (!responseBody.url) {
+      if (!payload?.url) {
         setErrorMessage("이미지 URL을 받지 못했습니다.");
         return;
       }
 
-      insertTextAtCursor(`\n![${file.name}](${responseBody.url})\n`);
+      insertTextAtCursor(`\n![${file.name}](${payload.url})\n`);
     } catch {
       setErrorMessage("이미지 업로드에 실패했습니다.");
     } finally {
@@ -184,7 +204,7 @@ export default function MarkdownEditorView({
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/gif"
               className="post-editor-file-input"
               onChange={handleImageUpload}
             />

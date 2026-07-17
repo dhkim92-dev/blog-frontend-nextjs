@@ -6,11 +6,13 @@ import { browserApiResumeRepository } from "./browser-api-resume-repository";
 
 type ResumeActionsProps = {
   hasResume: boolean;
+  resumeId: string | null;
   canManage: boolean;
 };
 
 export default function ResumeActions({
   hasResume,
+  resumeId,
   canManage,
 }: ResumeActionsProps) {
   const { startCommand } = useCommandLoading();
@@ -23,7 +25,11 @@ export default function ResumeActions({
     }
 
     const command = startCommand();
-    const result = await browserApiResumeRepository.deleteResume();
+    if (!resumeId) {
+      return;
+    }
+
+    const result = await browserApiResumeRepository.deleteResume(resumeId);
 
     if (result.status !== 200 && result.status !== 204) {
       await command.dismiss();

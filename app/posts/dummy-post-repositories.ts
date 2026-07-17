@@ -462,7 +462,7 @@ function buildNextUrl(categoryId: string | null, cursor: string | null) {
 
   params.set("cursor", cursor);
 
-  return `/api/posts?${params.toString()}`;
+  return `/api/v1/posts?${params.toString()}`;
 }
 
 export async function createPostListApiResponse(
@@ -889,7 +889,7 @@ export class BrowserDummyPostRepository {
     }
 
     const query = searchParams.toString();
-    const response = await fetch(`/api/posts${query ? `?${query}` : ""}`, {
+    const response = await fetch(`/api/v1/posts${query ? `?${query}` : ""}`, {
       method: "GET",
       cache: "no-store",
     });
@@ -900,7 +900,7 @@ export class BrowserDummyPostRepository {
   }
 
   async createPost(requestBody: SavePostRequestDto): Promise<number> {
-    const response = await fetch("/api/posts", {
+    const response = await fetch("/api/v1/posts", {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -916,7 +916,7 @@ export class BrowserDummyPostRepository {
     postId: string,
     requestBody: SavePostRequestDto,
   ): Promise<number> {
-    const response = await fetch(`/api/posts/${postId}`, {
+    const response = await fetch(`/api/v1/posts/${postId}`, {
       method: "PUT",
       cache: "no-store",
       headers: {

@@ -58,7 +58,11 @@ export default async function ResumePage({ searchParams }: ResumePageProps) {
               <div className="resume-meta">등록된 이력서가 없습니다.</div>
             )}
           </div>
-          <ResumeActions hasResume={resume !== null} canManage={isAdmin} />
+          <ResumeActions
+            hasResume={resume !== null}
+            resumeId={resume?.id ?? null}
+            canManage={isAdmin}
+          />
         </div>
 
         {resume ? (

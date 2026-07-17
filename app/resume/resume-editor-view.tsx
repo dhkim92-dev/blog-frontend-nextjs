@@ -47,7 +47,10 @@ export default function ResumeEditorView({
 
     try {
       const result = initialResume
-        ? await browserApiResumeRepository.updateResume(requestBody)
+        ? await browserApiResumeRepository.updateResume(
+            initialResume.id,
+            requestBody,
+          )
         : await browserApiResumeRepository.createResume(requestBody);
 
       if (
