@@ -12,7 +12,7 @@ type ApiResult = {
 
 export class BrowserApiMemberRepository {
   async createMember(requestBody: SaveMemberProfileRequestDto): Promise<ApiResult> {
-    const response = await browserAuthFetch("/api/members", {
+    const response = await browserAuthFetch("/bff/api/members", {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -32,7 +32,7 @@ export class BrowserApiMemberRepository {
     memberId: string,
     requestBody: SaveMemberProfileRequestDto,
   ): Promise<ApiResult> {
-    const response = await browserAuthFetch(`/api/members/${memberId}`, {
+    const response = await browserAuthFetch(`/bff/api/members/${memberId}`, {
       method: "PUT",
       cache: "no-store",
       headers: {
@@ -49,7 +49,7 @@ export class BrowserApiMemberRepository {
   }
 
   async deleteMember(memberId: string): Promise<ApiResult> {
-    const response = await browserAuthFetch(`/api/members/${memberId}`, {
+    const response = await browserAuthFetch(`/bff/api/members/${memberId}`, {
       method: "DELETE",
       cache: "no-store",
     });
@@ -62,7 +62,7 @@ export class BrowserApiMemberRepository {
   }
 
   async logout(): Promise<ApiResult> {
-    const response = await browserAuthFetch("/api/auth/logout", {
+    const response = await browserAuthFetch("/bff/api/auth/logout", {
       method: "POST",
       cache: "no-store",
     });

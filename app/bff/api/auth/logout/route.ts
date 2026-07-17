@@ -9,36 +9,18 @@ import {
 async function handleLogoutRequest(request: Request) {
   const cookieHeader = request.headers.get("cookie");
   const sessionId = getAccessTokenSessionIdFromCookieHeader(cookieHeader);
-  const response = new NextResponse(null, {
-    status: 204,
-  });
+  const response = new NextResponse(null, { status: 204 });
 
-  if (!getRefreshTokenFromCookieHeader(cookieHeader)) {
-    await clearAuthenticationCookies(response.cookies, sessionId);
-
-    return response;
-  }
-
-  try {
-    const revokeResponse = await fetch(
-      new URL("/api/v1/auht/jwt/revoke", getApiBaseUrl()),
-      {
+  if (getRefreshTokenFromCookieHeader(cookieHeader)) {
+    try {
+      await fetch(new URL("/api/v1/auth/jwt/revoke", getApiBaseUrl()), {
         method: "DELETE",
         cache: "no-store",
-        headers: new Headers({
-          Accept: "application/json",
-          Cookie: cookieHeader ?? "",
-        }),
-      },
-    );
-
-    if (revokeResponse.status !== 204) {
-      console.warn("[auth/logout] upstream logout returned non-204", {
-        status: revokeResponse.status,
+        headers: { Accept: "application/json", Cookie: cookieHeader ?? "" },
       });
+    } catch {
+      // The local session must still be cleared when the API server is unavailable.
     }
-  } catch {
-    console.warn("[auth/logout] upstream logout request failed");
   }
 
   await clearAuthenticationCookies(response.cookies, sessionId);

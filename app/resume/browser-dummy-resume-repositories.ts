@@ -12,7 +12,7 @@ type ApiResult = {
 
 export class BrowserDummyResumeRepository {
   async createResume(requestBody: SaveResumeRequestDto): Promise<ApiResult> {
-    const response = await fetch("/api/v1/resumes", {
+    const response = await browserAuthFetch("/bff/api/v1/resumes", {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -35,7 +35,7 @@ export class BrowserDummyResumeRepository {
     resumeId: string,
     requestBody: SaveResumeRequestDto,
   ): Promise<ApiResult> {
-    const response = await fetch(`/api/v1/resumes/${resumeId}`, {
+    const response = await browserAuthFetch(`/bff/api/v1/resumes/${resumeId}`, {
       method: "PUT",
       cache: "no-store",
       headers: {
@@ -55,7 +55,7 @@ export class BrowserDummyResumeRepository {
   }
 
   async deleteResume(resumeId: string): Promise<ApiResult> {
-    const response = await fetch(`/api/v1/resumes/${resumeId}`, {
+    const response = await browserAuthFetch(`/bff/api/v1/resumes/${resumeId}`, {
       method: "DELETE",
       cache: "no-store",
     });

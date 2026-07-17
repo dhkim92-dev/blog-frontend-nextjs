@@ -75,7 +75,7 @@ export default function LoginView({
     let shouldDismissCommand = true;
 
     try {
-      const response = await browserAuthFetch("/login/email-password", {
+      const response = await browserAuthFetch("/bff/api/auth/email-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

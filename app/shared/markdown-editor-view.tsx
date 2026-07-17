@@ -150,7 +150,7 @@ export default function MarkdownEditorView({
       formData.append("file", file);
       formData.append("usage", "POST_IMAGE");
 
-      const response = await fetch("/api/v1/files", {
+      const response = await fetch("/bff/api/v1/files", {
         method: "POST",
         body: formData,
       });

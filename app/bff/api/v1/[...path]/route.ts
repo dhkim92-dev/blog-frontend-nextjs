@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getApiBaseUrl } from "@/app/login/auth-session";
 import {
   applyRefreshedAuthentication,
-  appendRefreshTokenSetCookies,
   createSessionExpiredResponse,
   fetchApiServer,
 } from "@/app/login/api-server-fetch";
@@ -35,7 +34,7 @@ async function proxyApiRequest(request: Request, context: ApiRouteContext) {
       cache: "no-store",
     });
 
-    if (result.sessionExpired) {
+    if (result.refreshTokenRemoved) {
       return createSessionExpiredResponse(result.sessionId);
     }
 
@@ -51,7 +50,6 @@ async function proxyApiRequest(request: Request, context: ApiRouteContext) {
       response.headers.set("content-type", upstreamContentType);
     }
 
-    appendRefreshTokenSetCookies(response.headers, result.refreshTokenSetCookies);
     await applyRefreshedAuthentication(response.cookies, result);
 
     return response;
@@ -66,7 +64,7 @@ async function proxyApiRequest(request: Request, context: ApiRouteContext) {
       { status: 502 },
     );
   }
-}aa
+}
 
 export const GET = proxyApiRequest;
 export const POST = proxyApiRequest;

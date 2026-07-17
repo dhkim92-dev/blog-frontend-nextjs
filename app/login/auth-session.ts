@@ -229,6 +229,16 @@ function getAuthenticationCookieOptions() {
   };
 }
 
+function getRefreshTokenMaxAge(refreshToken: string) {
+  const expiresAt = decodeAuthenticationJwtClaims(refreshToken)?.exp;
+
+  if (typeof expiresAt !== "number") {
+    return undefined;
+  }
+
+  return Math.max(0, Math.floor(expiresAt - Date.now() / 1000));
+}
+
 export async function setAuthenticationCookies(
   cookies: CookieWriter,
   tokens: LoginTokenPayload,
@@ -244,7 +254,10 @@ export async function setAuthenticationCookies(
     await accessTokenSessionStore.set(existingSessionId, tokens.accessToken);
   }
 
-  cookies.set("refresh-token", tokens.refreshToken, cookieOptions);
+  cookies.set("refresh-token", tokens.refreshToken, {
+    ...cookieOptions,
+    maxAge: getRefreshTokenMaxAge(tokens.refreshToken),
+  });
   cookies.set(ACCESS_TOKEN_SESSION_COOKIE_NAME, sessionId, cookieOptions);
 
   if (authenticationPayload) {

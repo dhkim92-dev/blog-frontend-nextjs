@@ -11,18 +11,12 @@ import type {
 
 type PostListPayload = {
   count: number;
-  items: Array<
-    PostListItemDto & {
-      _links?: {
-        next: string | null;
-      } | null;
-    }
-  >;
-  _link?:
-    | {
-        href: string;
-      }
-    | null;
+  items: PostListItemDto[];
+  _links: {
+    next: {
+      href: string;
+    } | null;
+  };
 };
 
 type PostDetailPayload = PostDetailDto & {
@@ -60,21 +54,18 @@ function createRequestHeaders() {
   });
 }
 
-function extractCursor(nextUrl: string | null) {
-  if (!nextUrl) {
+function extractCursor(nextHref: string | null | undefined) {
+  if (!nextHref) {
     return null;
   }
 
-  const searchParams = new URL(nextUrl, "https://dummy.local").searchParams;
+  const searchParams = new URL(nextHref).searchParams;
 
   return searchParams.get("cursor");
 }
 
 function mapPostListPayloadToDto(payload: PostListPayload): PostCursorPageDto {
-  const lastItem = payload.items[payload.items.length - 1];
-  const nextCursor = extractCursor(
-    payload._link?.href ?? lastItem?._links?.next ?? null,
-  );
+  const nextCursor = extractCursor(payload._links.next?.href);
 
   return {
     count: payload.count,
