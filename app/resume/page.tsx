@@ -1,4 +1,5 @@
 import PostDetailMarkdown from "@/app/posts/post-detail-markdown";
+import type { Metadata } from "next";
 import "@/app/posts/post-detail-view.css";
 import "@/app/posts/post-editor-view.css";
 import {
@@ -10,6 +11,13 @@ import { apiResumeRepository } from "./api-resume-repository";
 import ResumeActions from "./resume-actions";
 import ResumeEditorView from "./resume-editor-view";
 import "./resume-view.css";
+
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "Resume",
+  description: "Dohoon Kim의 경력과 기술 이력입니다.",
+};
 
 type ResumePageProps = {
   searchParams?: Promise<{
@@ -49,7 +57,7 @@ export default async function ResumePage({ searchParams }: ResumePageProps) {
       <div className="resume-view-root">
         <div className="resume-header">
           <div className="resume-heading">
-            <div className="resume-eyebrow">Resume</div>
+            <h1 className="resume-eyebrow">Resume</h1>
             {resume ? (
               <div className="resume-meta">
                 최근 수정 {formatResumeDate(resume.updatedAt)}

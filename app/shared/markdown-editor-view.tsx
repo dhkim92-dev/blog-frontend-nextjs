@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { getApiPayload, parseApiEnvelope } from "./api-envelope";
+import { browserAuthFetch } from "./browser-auth-fetch";
+import ErrorToast, { type ErrorToastState } from "./error-toast";
 
 type MarkdownEditorViewProps = {
   header?: ReactNode;
@@ -61,7 +63,14 @@ export default function MarkdownEditorView({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isYoutubeInputVisible, setIsYoutubeInputVisible] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState<ErrorToastState | null>(null);
+
+  function showErrorToast(message: string) {
+    setErrorToast({
+      id: Date.now(),
+      message,
+    });
+  }
 
   function syncEditorHeight() {
     const editorElement = editorRef.current;
@@ -136,13 +145,13 @@ export default function MarkdownEditorView({
     }
 
     if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
-      setErrorMessage("JPEG, PNG, GIF 이미지만 업로드할 수 있습니다.");
+      showErrorToast("JPEG, PNG, GIF 이미지만 업로드할 수 있습니다.");
       event.target.value = "";
       return;
     }
 
     setIsUploadingImage(true);
-    setErrorMessage(null);
+    setErrorToast(null);
 
     try {
       const formData = new FormData();
@@ -150,13 +159,13 @@ export default function MarkdownEditorView({
       formData.append("file", file);
       formData.append("usage", "POST_IMAGE");
 
-      const response = await fetch("/bff/api/v1/files", {
+      const response = await browserAuthFetch("/bff/api/v1/files", {
         method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        setErrorMessage("이미지 업로드에 실패했습니다.");
+        showErrorToast("이미지 업로드에 실패했습니다.");
         return;
       }
 
@@ -164,13 +173,13 @@ export default function MarkdownEditorView({
       const payload = getApiPayload(responseBody);
 
       if (!payload?.url) {
-        setErrorMessage("이미지 URL을 받지 못했습니다.");
+        showErrorToast("이미지 URL을 받지 못했습니다.");
         return;
       }
 
       insertTextAtCursor(`\n![${file.name}](${payload.url})\n`);
     } catch {
-      setErrorMessage("이미지 업로드에 실패했습니다.");
+      showErrorToast("이미지 업로드에 실패했습니다.");
     } finally {
       event.target.value = "";
       setIsUploadingImage(false);
@@ -181,11 +190,11 @@ export default function MarkdownEditorView({
     const normalizedUrl = youtubeUrl.trim();
 
     if (!normalizedUrl) {
-      setErrorMessage("유튜브 URL을 입력해주세요.");
+      showErrorToast("유튜브 URL을 입력해주세요.");
       return;
     }
 
-    setErrorMessage(null);
+    setErrorToast(null);
     insertTextAtCursor(`\n${normalizedUrl}\n`);
     setYoutubeUrl("");
     setIsYoutubeInputVisible(false);
@@ -325,11 +334,12 @@ export default function MarkdownEditorView({
         ) : null}
       </div>
 
-      {errorMessage ? (
-        <div className="post-editor-feedback" role="alert">
-          {errorMessage}
-        </div>
-      ) : null}
+      <ErrorToast
+        toast={errorToast}
+        onClear={(toastId) => {
+          setErrorToast((current) => (current?.id === toastId ? null : current));
+        }}
+      />
     </>
   );
 }

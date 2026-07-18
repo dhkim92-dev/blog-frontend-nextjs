@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import {
   clearAuthenticationCookies,
-  getApiBaseUrl,
   getAccessTokenSessionIdFromCookieHeader,
   getRefreshTokenFromCookieHeader,
   setAuthenticationCookies,
@@ -9,10 +8,12 @@ import {
 } from "@/app/login/auth-session";
 import { accessTokenSessionStore } from "@/app/login/access-token-session-store";
 import { parseApiEnvelope } from "@/app/shared/api-envelope";
+import { getBackendApiHost } from "@/app/shared/runtime-config";
 
 export type ApiServerFetchResult = {
   upstreamResponse: Response;
   refreshTokenRemoved: boolean;
+  sessionExpired: boolean;
   refreshedTokens: LoginTokenPayload | null;
   sessionId: string | null;
 };
@@ -86,7 +87,7 @@ function createAuthHeaders(
 }
 
 export async function requestAccessTokenReissue(refreshToken: string) {
-  const reissueUrl = new URL("/api/v1/auth/jwt/reissue", getApiBaseUrl());
+  const reissueUrl = new URL("/api/v1/auth/jwt/reissue", getBackendApiHost());
 
   console.info("[auth/reissue] requesting access token reissue", {
     url: reissueUrl.toString(),
@@ -176,6 +177,7 @@ export async function fetchApiServerWithCookieHeader(
     return {
       upstreamResponse,
       refreshTokenRemoved: true,
+      sessionExpired: true,
       refreshedTokens: null,
       sessionId,
     };
@@ -188,6 +190,7 @@ export async function fetchApiServerWithCookieHeader(
     return {
       upstreamResponse,
       refreshTokenRemoved: false,
+      sessionExpired: false,
       refreshedTokens: null,
       sessionId,
     };
@@ -213,6 +216,7 @@ export async function fetchApiServerWithCookieHeader(
     return {
       upstreamResponse,
       refreshTokenRemoved: reissueResult.refreshTokenRemoved,
+      sessionExpired: true,
       refreshedTokens: null,
       sessionId,
     };
@@ -240,6 +244,10 @@ export async function fetchApiServerWithCookieHeader(
   return {
     upstreamResponse: retryResponse,
     refreshTokenRemoved: retryRefreshTokenRemoved,
+    sessionExpired:
+      retryRefreshTokenRemoved ||
+      retryResponse.status === 401 ||
+      retryResponse.status === 403,
     refreshedTokens: reissueResult.refreshedTokens,
     sessionId,
   };

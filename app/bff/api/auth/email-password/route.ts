@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import {
-  getApiBaseUrl,
   setAuthenticationCookies,
   type LoginTokenPayload,
 } from "@/app/login/auth-session";
+import { getBackendApiHost } from "@/app/shared/runtime-config";
 import {
   createSessionExpiredResponse,
   fetchApiServer,
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   try {
     const result = await fetchApiServer(
       request,
-      new URL("/api/v1/auth/email-password", getApiBaseUrl()),
+      new URL("/api/v1/auth/email-password", getBackendApiHost()),
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       },
     );
 
-    if (result.refreshTokenRemoved) {
+    if (result.sessionExpired) {
       return createSessionExpiredResponse(result.sessionId);
     }
 

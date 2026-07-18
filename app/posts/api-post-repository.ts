@@ -1,5 +1,5 @@
 import "server-only";
-import { getApiBaseUrl } from "@/app/login/auth-session";
+import { getBackendApiHost } from "@/app/shared/runtime-config";
 import { fetchCurrentServerApi } from "@/app/login/current-server-api-fetch";
 import { getApiPayload, parseApiEnvelope } from "@/app/shared/api-envelope";
 import type {
@@ -88,7 +88,7 @@ function mapPostListPayloadToDto(payload: PostListPayload): PostCursorPageDto {
 
 export class ApiPostRepository {
   async getPosts(params: PostQueryParams): Promise<PostCursorPageDto> {
-    const url = new URL("/api/v1/posts", getApiBaseUrl());
+    const url = new URL("/api/v1/posts", getBackendApiHost());
 
     if (params.categoryId) {
       url.searchParams.set("categoryId", params.categoryId);
@@ -116,7 +116,7 @@ export class ApiPostRepository {
 
   async getPostById(postId: string): Promise<PostDetailDto | null> {
     const result = await fetchCurrentServerApi(
-      new URL(`/api/v1/posts/${postId}`, getApiBaseUrl()),
+      new URL(`/api/v1/posts/${postId}`, getBackendApiHost()),
       {
         method: "GET",
         cache: "no-store",

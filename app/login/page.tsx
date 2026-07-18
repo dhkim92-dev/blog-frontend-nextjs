@@ -2,14 +2,7 @@ import "./login-view.css";
 import LoginView from "./login-view";
 import { getGithubOAuthAuthorizeUrl } from "./auth-session";
 
-const oauthProviders = [
-  {
-    id: "github",
-    label: "GitHub",
-    imageSrc: "/github.png",
-    authorizeUrl: getGithubOAuthAuthorizeUrl(),
-  },
-];
+export const dynamic = "force-dynamic";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -22,6 +15,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const initialErrorCode = Array.isArray(resolvedSearchParams.error)
     ? resolvedSearchParams.error[0]
     : resolvedSearchParams.error;
+  const oauthProviders = [
+    {
+      id: "github",
+      label: "GitHub",
+      imageSrc: "/github.png",
+      authorizeUrl: getGithubOAuthAuthorizeUrl(),
+    },
+  ];
 
   return (
     <LoginView

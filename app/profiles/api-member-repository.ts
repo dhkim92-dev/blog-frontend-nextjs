@@ -1,5 +1,5 @@
 import "server-only";
-import { getApiBaseUrl } from "@/app/login/auth-session";
+import { getBackendApiHost } from "@/app/shared/runtime-config";
 import { fetchCurrentServerApi } from "@/app/login/current-server-api-fetch";
 import { getApiPayload, parseApiEnvelope } from "@/app/shared/api-envelope";
 import type {
@@ -82,7 +82,7 @@ function isUnauthorizedResponse(params: {
 export class ApiMemberRepository {
   async getMemberById(memberId: string): Promise<MemberProfileDto | null> {
     const result = await fetchCurrentServerApi(
-      new URL(`/api/v1/members/${memberId}`, getApiBaseUrl()),
+      new URL(`/api/v1/members/${memberId}`, getBackendApiHost()),
       {
         method: "GET",
         cache: "no-store",
@@ -122,7 +122,7 @@ export class ApiMemberRepository {
     authAccountId: string,
   ): Promise<MemberAuthAccountDto | null> {
     const result = await fetchCurrentServerApi(
-      new URL(`/api/v1/auth/${authAccountId}`, getApiBaseUrl()),
+      new URL(`/api/v1/auth/${authAccountId}`, getBackendApiHost()),
       {
         method: "GET",
         cache: "no-store",

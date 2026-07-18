@@ -246,14 +246,6 @@
   text-align: center;
 }
 
-.post-editor-feedback {
-  width: min(1320px, 100%);
-  margin-top: 16px;
-  color: #fca5a5;
-  font-size: 15px;
-  line-height: 1.5;
-}
-
 .post-editor-preview-switch {
   display: inline-flex;
   align-items: center;
@@ -344,8 +336,7 @@
   .post-editor-attachmentbar,
   .post-editor-controlpanel,
   .post-editor-right-column,
-  .post-editor-markdown-preview,
-  .post-editor-feedback {
+  .post-editor-markdown-preview {
     width: 100%;
     max-width: 100%;
   }

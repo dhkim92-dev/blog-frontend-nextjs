@@ -1,5 +1,5 @@
 import "server-only";
-import { getApiBaseUrl } from "@/app/login/auth-session";
+import { getBackendApiHost } from "@/app/shared/runtime-config";
 import { fetchCurrentServerApi } from "@/app/login/current-server-api-fetch";
 import { getApiPayload, parseApiEnvelope } from "@/app/shared/api-envelope";
 import type {
@@ -24,7 +24,7 @@ function createRequestHeaders() {
 export class ApiPostCategoryRepository {
   async getCategories(): Promise<PostCategoryCollectionDto> {
     const result = await fetchCurrentServerApi(
-      new URL("/api/v1/post-categories", getApiBaseUrl()),
+      new URL("/api/v1/post-categories", getBackendApiHost()),
       {
         method: "GET",
         cache: "no-store",

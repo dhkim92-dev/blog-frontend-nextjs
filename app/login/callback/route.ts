@@ -5,6 +5,7 @@ import {
   setAuthenticationCookies,
 } from "@/app/login/auth-session";
 import { requestAccessTokenReissue } from "@/app/login/api-server-fetch";
+import { getFrontendHost } from "@/app/shared/runtime-config";
 
 function maskTokenForLog(token: string | null) {
   if (!token) {
@@ -20,6 +21,7 @@ function maskTokenForLog(token: string | null) {
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const frontendHost = getFrontendHost();
   const provider = requestUrl.searchParams.get("provider");
   const hasError = requestUrl.searchParams.get("error");
 
@@ -36,7 +38,7 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.redirect(
-      buildLoginErrorRedirectUrl(requestUrl.origin, "oauth_failed", provider),
+      buildLoginErrorRedirectUrl(frontendHost, "oauth_failed", provider),
     );
   }
 
@@ -53,7 +55,7 @@ export async function GET(request: Request) {
   if (!refreshToken) {
     return NextResponse.redirect(
       buildLoginErrorRedirectUrl(
-        requestUrl.origin,
+        frontendHost,
         "oauth_refresh_token_missing",
         provider,
       ),
@@ -72,7 +74,7 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(
       buildLoginErrorRedirectUrl(
-        requestUrl.origin,
+        frontendHost,
         "oauth_reissue_failed",
         provider,
       ),
@@ -88,20 +90,20 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(
       buildLoginErrorRedirectUrl(
-        requestUrl.origin,
+        frontendHost,
         "oauth_reissue_failed",
         provider,
       ),
     );
   }
 
-  const response = NextResponse.redirect(new URL("/", requestUrl.origin));
+  const response = NextResponse.redirect(new URL("/", frontendHost));
 
   await setAuthenticationCookies(response.cookies, reissueResult.refreshedTokens);
 
   console.info("[auth/oauth-callback] authentication established", {
     provider,
-    redirectTo: new URL("/", requestUrl.origin).toString(),
+    redirectTo: new URL("/", frontendHost).toString(),
     accessToken: maskTokenForLog(reissueResult.refreshedTokens.accessToken),
   });
 

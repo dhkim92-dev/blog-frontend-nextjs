@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   getCurrentServerAuthentication,
   isAdminServerAuthentication,
@@ -13,6 +14,11 @@ import PostsView from "./posts-view";
 import "./posts-view.css";
 import "./post-detail-view.css";
 import "./post-editor-view.css";
+
+export const metadata: Metadata = {
+  title: "Posts",
+  description: "Dohoon Kim의 기술 게시물 목록입니다.",
+};
 
 type PostsPageProps = {
   searchParams?: Promise<{

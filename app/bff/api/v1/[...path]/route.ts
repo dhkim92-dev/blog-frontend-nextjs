@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { getApiBaseUrl } from "@/app/login/auth-session";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { getBackendApiHost } from "@/app/shared/runtime-config";
 import {
   applyRefreshedAuthentication,
   createSessionExpiredResponse,
   fetchApiServer,
 } from "@/app/login/api-server-fetch";
+import { RESUME_CACHE_TAG } from "@/app/resume/resume-cache";
 
 type ApiRouteContext = {
   params: Promise<{
@@ -17,7 +19,7 @@ async function proxyApiRequest(request: Request, context: ApiRouteContext) {
   const requestUrl = new URL(request.url);
   const upstreamUrl = new URL(
     `/api/v1/${path.map(encodeURIComponent).join("/")}`,
-    getApiBaseUrl(),
+    getBackendApiHost(),
   );
   upstreamUrl.search = requestUrl.search;
   const contentType = request.headers.get("content-type");
@@ -34,7 +36,7 @@ async function proxyApiRequest(request: Request, context: ApiRouteContext) {
       cache: "no-store",
     });
 
-    if (result.refreshTokenRemoved) {
+    if (result.sessionExpired) {
       return createSessionExpiredResponse(result.sessionId);
     }
 
@@ -51,6 +53,15 @@ async function proxyApiRequest(request: Request, context: ApiRouteContext) {
     }
 
     await applyRefreshedAuthentication(response.cookies, result);
+
+    if (
+      result.upstreamResponse.ok &&
+      path[0] === "resumes" &&
+      ["POST", "PUT", "DELETE"].includes(request.method)
+    ) {
+      revalidateTag(RESUME_CACHE_TAG, { expire: 0 });
+      revalidatePath("/resume");
+    }
 
     return response;
   } catch {

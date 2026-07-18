@@ -1,6 +1,8 @@
 import Image from "next/image";
 import "./home-view.css";
 
+export const revalidate = 3600;
+
 const profileTags = ["#BACKEND", "#INFRA", "#MSA"];
 
 const profileSkills = ["Spring Boot", "NestJS", "FastAPI", "Kubernetes"];

@@ -1,12 +1,13 @@
 {
   "name": "blog-nextjs",
-  "version": "0.1.0",
+  "version": "1.0.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "docker:push": "npm run build && docker build --tag elensar92/blog-frontend-nextjs:$npm_package_version --tag elensar92/blog-frontend-nextjs:latest . && docker push elensar92/blog-frontend-nextjs:$npm_package_version && docker push elensar92/blog-frontend-nextjs:latest"
   },
   "dependencies": {
     "highlight.js": "^11.11.1",

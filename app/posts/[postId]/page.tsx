@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import {
   getCurrentServerAuthentication,
   isAdminServerAuthentication,
@@ -23,6 +24,25 @@ type PostDetailPageProps = {
     mode?: string;
   }>;
 };
+
+export async function generateMetadata({
+  params,
+}: Pick<PostDetailPageProps, "params">): Promise<Metadata> {
+  const { postId } = await params;
+  const post = await apiPostRepository.getPostById(postId);
+
+  if (!post) {
+    return {
+      title: "Post not found",
+    };
+  }
+
+  return {
+    title: post.title,
+    description: post.content.replace(/\s+/g, " ").slice(0, 160),
+    keywords: post.title.split(/\s+/).filter(Boolean),
+  };
+}
 
 function formatPostDate(value: string) {
   const formatter = new Intl.DateTimeFormat("ko-KR", {

@@ -1,7 +1,7 @@
 import "server-only";
-import { getApiBaseUrl } from "@/app/login/auth-session";
-import { fetchCurrentServerApi } from "@/app/login/current-server-api-fetch";
+import { getBackendApiHost } from "@/app/shared/runtime-config";
 import { getApiPayload, parseApiEnvelope } from "@/app/shared/api-envelope";
+import { RESUME_CACHE_TAG } from "./resume-cache";
 import type { ResumeDetailDto } from "./resume-types";
 
 type ResumePayload = {
@@ -49,19 +49,20 @@ export class ApiResumeRepository {
     let response: Response;
 
     try {
-      const result = await fetchCurrentServerApi(
-        new URL("/api/v1/resumes", getApiBaseUrl()),
+      response = await fetch(
+        new URL("/api/v1/resumes", getBackendApiHost()),
         {
           method: "GET",
-          cache: "no-store",
           headers: createRequestHeaders(),
+          next: {
+            revalidate: 3600,
+            tags: [RESUME_CACHE_TAG],
+          },
         },
       );
-
-      response = result.upstreamResponse;
     } catch (error) {
       console.error("[resume/getResume] failed to fetch resume", {
-        apiBaseUrl: getApiBaseUrl(),
+        apiBaseUrl: getBackendApiHost(),
         error,
       });
 

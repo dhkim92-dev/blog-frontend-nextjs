@@ -1,4 +1,9 @@
 import { accessTokenSessionStore } from "@/app/login/access-token-session-store";
+import {
+  getBackendApiHost,
+  getFrontendCookieDomain,
+  getFrontendHost,
+} from "@/app/shared/runtime-config";
 
 export type AuthenticationTokenPayload = {
   sub: string;
@@ -31,49 +36,23 @@ type CookieWriter = {
       secure: boolean;
       sameSite: "lax";
       path: string;
+      domain?: string;
       maxAge?: number;
     },
   ) => unknown;
 };
 
-const DEFAULT_PRODUCTION_ORIGIN = "https://www.dohoon-kim.kr";
-const DEFAULT_DEVELOPMENT_API_ORIGIN = "http://localhost:8080";
-const DEFAULT_DEVELOPMENT_APP_ORIGIN = "http://localhost:3000";
 const CALLBACK_PATH = "/login/callback";
 const ACCESS_TOKEN_SESSION_COOKIE_NAME = "access-token-session-id";
-
-function normalizeOrigin(origin: string) {
-  return origin.endsWith("/") ? origin.slice(0, -1) : origin;
-}
 
 export function isProductionEnvironment() {
   return process.env.NODE_ENV === "production";
 }
 
-export function getApiBaseUrl() {
-  if (process.env.API_BASE_URL) {
-    return normalizeOrigin(process.env.API_BASE_URL);
-  }
-
-  return isProductionEnvironment()
-    ? DEFAULT_PRODUCTION_ORIGIN
-    : DEFAULT_DEVELOPMENT_API_ORIGIN;
-}
-
-export function getAppBaseUrl() {
-  if (process.env.APP_BASE_URL) {
-    return normalizeOrigin(process.env.APP_BASE_URL);
-  }
-
-  return isProductionEnvironment()
-    ? DEFAULT_PRODUCTION_ORIGIN
-    : DEFAULT_DEVELOPMENT_APP_ORIGIN;
-}
-
 export function getGithubOAuthAuthorizeUrl() {
-  const url = new URL("/oauth2/authorization/github", getApiBaseUrl());
+  const url = new URL("/oauth2/authorization/github", getBackendApiHost());
 
-  url.searchParams.set("redirect_uri", `${getAppBaseUrl()}${CALLBACK_PATH}`);
+  url.searchParams.set("redirect_uri", `${getFrontendHost()}${CALLBACK_PATH}`);
 
   return url.toString();
 }
@@ -226,6 +205,7 @@ function getAuthenticationCookieOptions() {
     secure: isProductionEnvironment(),
     sameSite: "lax" as const,
     path: "/",
+    domain: getFrontendCookieDomain(),
   };
 }
 

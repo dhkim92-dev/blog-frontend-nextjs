@@ -3,12 +3,12 @@ import {
   clearAuthenticationCookies,
   decodeAuthenticationToken,
   getAccessTokenSessionIdFromCookieHeader,
-  getApiBaseUrl,
   getAuthenticatedMemberFromCookieHeader,
   getRefreshTokenFromCookieHeader,
   setAuthenticatedMemberCookie,
   setAuthenticationCookies,
 } from "@/app/login/auth-session";
+import { getBackendApiHost } from "@/app/shared/runtime-config";
 import {
   applyRefreshedAuthentication,
   createSessionExpiredResponse,
@@ -35,11 +35,11 @@ export async function forwardMemberRequest(
   try {
     const result = await fetchApiServer(
       request,
-      new URL(pathname, getApiBaseUrl()),
+      new URL(pathname, getBackendApiHost()),
       { ...init, cache: "no-store" },
     );
 
-    if (result.refreshTokenRemoved) {
+    if (result.sessionExpired) {
       return createSessionExpiredResponse(result.sessionId);
     }
 

@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import {
   clearAuthenticationCookies,
   getAccessTokenSessionIdFromCookieHeader,
-  getApiBaseUrl,
   getRefreshTokenFromCookieHeader,
 } from "@/app/login/auth-session";
+import { getBackendApiHost } from "@/app/shared/runtime-config";
 
 async function handleLogoutRequest(request: Request) {
   const cookieHeader = request.headers.get("cookie");
@@ -13,7 +13,7 @@ async function handleLogoutRequest(request: Request) {
 
   if (getRefreshTokenFromCookieHeader(cookieHeader)) {
     try {
-      await fetch(new URL("/api/v1/auth/jwt/revoke", getApiBaseUrl()), {
+      await fetch(new URL("/api/v1/auth/jwt/revoke", getBackendApiHost()), {
         method: "DELETE",
         cache: "no-store",
         headers: { Accept: "application/json", Cookie: cookieHeader ?? "" },
