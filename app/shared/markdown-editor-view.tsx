@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import dynamic from "next/dynamic";
 import { getApiPayload, parseApiEnvelope } from "./api-envelope";
 import { browserAuthFetch } from "./browser-auth-fetch";
@@ -20,6 +26,10 @@ type MarkdownEditorViewProps = {
 
 const MIN_EDITOR_HEIGHT = 480;
 const MAX_EDITOR_HEIGHT = 720;
+const MIN_EDITOR_COLUMN_WIDTH = 360;
+const MIN_PREVIEW_COLUMN_WIDTH = 360;
+const PREVIEW_RESIZER_WIDTH = 12;
+const PREVIEW_COLUMN_GAP = 12;
 const SUPPORTED_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -53,13 +63,23 @@ export default function MarkdownEditorView({
   onCancel,
   leftControls,
 }: MarkdownEditorViewProps) {
+  const editorLayoutRef = useRef<HTMLDivElement | null>(null);
+  const editorColumnRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewResizeRef = useRef<{
+    startX: number;
+    startWidth: number;
+  } | null>(null);
   const selectionRef = useRef({
     start: 0,
     end: 0,
   });
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
+  const [previewEditorRatio, setPreviewEditorRatio] = useState<number | null>(
+    null,
+  );
+  const [isPreviewResizing, setIsPreviewResizing] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isYoutubeInputVisible, setIsYoutubeInputVisible] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -98,6 +118,74 @@ export default function MarkdownEditorView({
   useEffect(() => {
     syncEditorHeight();
   }, []);
+
+  function getPreviewPaneWidth() {
+    const layoutElement = editorLayoutRef.current;
+
+    if (!layoutElement) {
+      return null;
+    }
+
+    return (
+      layoutElement.getBoundingClientRect().width -
+      PREVIEW_RESIZER_WIDTH -
+      PREVIEW_COLUMN_GAP * 2
+    );
+  }
+
+  function handlePreviewResizeStart(
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) {
+    const editorColumnElement = editorColumnRef.current;
+    const previewPaneWidth = getPreviewPaneWidth();
+
+    if (
+      !editorColumnElement ||
+      previewPaneWidth === null ||
+      previewPaneWidth < MIN_EDITOR_COLUMN_WIDTH + MIN_PREVIEW_COLUMN_WIDTH
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    previewResizeRef.current = {
+      startX: event.clientX,
+      startWidth: editorColumnElement.getBoundingClientRect().width,
+    };
+    setIsPreviewResizing(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePreviewResizeMove(
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) {
+    const resizeState = previewResizeRef.current;
+    const previewPaneWidth = getPreviewPaneWidth();
+
+    if (!resizeState || previewPaneWidth === null) {
+      return;
+    }
+
+    const maxEditorWidth = previewPaneWidth - MIN_PREVIEW_COLUMN_WIDTH;
+    const nextEditorWidth = Math.min(
+      Math.max(
+        resizeState.startWidth + event.clientX - resizeState.startX,
+        MIN_EDITOR_COLUMN_WIDTH,
+      ),
+      maxEditorWidth,
+    );
+
+    setPreviewEditorRatio(nextEditorWidth / previewPaneWidth);
+  }
+
+  function handlePreviewResizeEnd(event: ReactPointerEvent<HTMLDivElement>) {
+    previewResizeRef.current = null;
+    setIsPreviewResizing(false);
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
 
   function rememberEditorSelection() {
     const editorElement = editorRef.current;
@@ -203,10 +291,19 @@ export default function MarkdownEditorView({
   return (
     <>
       <div
+        ref={editorLayoutRef}
         className="post-editor-view-root"
         data-preview-visible={isPreviewVisible ? "true" : "false"}
+        data-preview-resizing={isPreviewResizing ? "true" : "false"}
+        style={
+          isPreviewVisible && previewEditorRatio !== null
+            ? {
+                gridTemplateColumns: `minmax(${MIN_EDITOR_COLUMN_WIDTH}px, ${previewEditorRatio}fr) ${PREVIEW_RESIZER_WIDTH}px minmax(${MIN_PREVIEW_COLUMN_WIDTH}px, ${1 - previewEditorRatio}fr)`,
+              }
+            : undefined
+        }
       >
-        <div className="post-editor-left-column">
+        <div ref={editorColumnRef} className="post-editor-left-column">
           {header}
 
           <div className="post-editor-attachmentbar">
@@ -324,13 +421,25 @@ export default function MarkdownEditorView({
         </div>
 
         {isPreviewVisible ? (
-          <div className="post-editor-right-column">
-            <div className="post-editor-markdown-preview post-detail-markdown">
-              <div className="post-editor-preview-scroll hide-scrollbar">
-                <MarkdownPreview content={content} />
+          <>
+            <div
+              className="post-editor-preview-resizer"
+              role="separator"
+              aria-label="에디터와 프리뷰 영역 크기 조절"
+              aria-orientation="vertical"
+              onPointerDown={handlePreviewResizeStart}
+              onPointerMove={handlePreviewResizeMove}
+              onPointerUp={handlePreviewResizeEnd}
+              onPointerCancel={handlePreviewResizeEnd}
+            />
+            <div className="post-editor-right-column">
+              <div className="post-editor-markdown-preview post-detail-markdown">
+                <div className="post-editor-preview-scroll hide-scrollbar">
+                  <MarkdownPreview content={content} />
+                </div>
               </div>
             </div>
-          </div>
+          </>
         ) : null}
       </div>
 

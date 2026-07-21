@@ -258,6 +258,16 @@
   border-top: 1px solid #3f3f46;
 }
 
+.post-detail-markdown .markdown-body hr:has(+ :is(p, h1, h2, h3, h4, h5, h6)),
+.post-detail-markdown .markdown-body :is(p, h1, h2, h3, h4, h5, h6):has(+ hr) {
+  margin-bottom: 0.6em;
+}
+
+.post-detail-markdown .markdown-body hr + :is(p, h1, h2, h3, h4, h5, h6),
+.post-detail-markdown .markdown-body :is(p, h1, h2, h3, h4, h5, h6) + hr {
+  margin-top: 0;
+}
+
 .post-detail-markdown .markdown-body table {
   display: block;
   overflow-x: auto;

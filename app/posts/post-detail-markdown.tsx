@@ -7,6 +7,8 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import type { Element, Parent, Root } from "hast";
+import type { Root as MdastRoot, RootContent } from "mdast";
 
 type PostDetailMarkdownProps = {
   content: string;
@@ -105,11 +107,116 @@ function getYoutubeEmbedUrl(value: string) {
   }
 }
 
+function normalizeThematicBreaks() {
+  return (tree: MdastRoot) => {
+    const children: RootContent[] = [];
+
+    for (const node of tree.children) {
+      if (
+        node.type === "heading" &&
+        node.depth === 2 &&
+        node.position?.start.line !== node.position?.end.line
+      ) {
+        children.push(
+          {
+            type: "paragraph",
+            children: node.children,
+          },
+          { type: "thematicBreak" },
+        );
+        continue;
+      }
+
+      children.push(node);
+    }
+
+    tree.children = children;
+  };
+}
+
+function normalizeMarkdownStyle(style: string) {
+  const styles: string[] = [];
+
+  for (const declaration of style.split(";")) {
+    const match = declaration.match(/^\s*([a-z-]+)\s*:\s*(.+?)\s*$/i);
+
+    if (!match) {
+      continue;
+    }
+
+    const property = match[1].toLowerCase();
+    const value = match[2].trim().toLowerCase();
+    const isLength = /^(?:\d+|\d*\.\d+)(?:px|em|rem|%|vw|vh|vmin|vmax|ch|ex|cm|mm|q|in|pt|pc)$/.test(
+      value,
+    );
+    const isLineHeight = /^(?:normal|(?:\d+|\d*\.\d+)(?:px|em|rem|%|vw|vh|vmin|vmax|ch|ex|cm|mm|q|in|pt|pc)?)$/.test(
+      value,
+    );
+    const isFontSize =
+      value === "0" ||
+      isLength ||
+      /^(?:xx-small|x-small|small|medium|large|x-large|xx-large|smaller|larger)$/.test(
+        value,
+      );
+    const isFontWeight =
+      /^(?:normal|bold|bolder|lighter)$/.test(value) ||
+      (/^(?:\d+|\d*\.\d+)$/.test(value) &&
+        Number(value) >= 1 &&
+        Number(value) <= 1000);
+
+    if (
+      (property === "line-height" && isLineHeight) ||
+      (property === "font-size" && isFontSize) ||
+      (property === "font-weight" && isFontWeight)
+    ) {
+      styles.push(`${property}: ${value}`);
+    }
+  }
+
+  return styles.join("; ");
+}
+
+function normalizeAlignedAttribute() {
+  return (tree: Root) => {
+    function visit(node: Parent) {
+      if (node.type === "element") {
+        const element = node as Element;
+        const { aligned, style } = element.properties;
+
+        if (typeof aligned === "string" && element.properties.align === undefined) {
+          element.properties.align = aligned;
+        }
+
+        delete element.properties.aligned;
+
+        if (typeof style === "string") {
+          const normalizedStyle = normalizeMarkdownStyle(style);
+
+          if (normalizedStyle) {
+            element.properties.style = normalizedStyle;
+          } else {
+            delete element.properties.style;
+          }
+        }
+      }
+
+      for (const child of node.children) {
+        if ("children" in child) {
+          visit(child);
+        }
+      }
+    }
+
+    visit(tree);
+  };
+}
+
 const sanitizeSchema = {
   ...defaultSchema,
   tagNames: [...(defaultSchema.tagNames ?? []), "iframe"],
   attributes: {
     ...defaultSchema.attributes,
+    "*": [...(defaultSchema.attributes?.["*"] ?? []), "style"],
     code: [
       ...(defaultSchema.attributes?.code ?? []),
       ["className", /^language-[\w#+-]+$/],
@@ -239,9 +346,10 @@ export default function PostDetailMarkdown({
   return (
     <div className="markdown-body">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
+        remarkPlugins={[remarkGfm, remarkMath, normalizeThematicBreaks]}
         rehypePlugins={[
           rehypeRaw,
+          normalizeAlignedAttribute,
           [rehypeSanitize, sanitizeSchema],
           rehypeKatex,
           [rehypeHighlight, { detect: false, ignoreMissing: true }],
